@@ -130,6 +130,21 @@ const PRDGenerator = () => {
     setAnswers({});
     setPrd("");
     setCopied(false);
+    setTimeLeft(60);
+    setTimerActive(false);
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getTimerColor = () => {
+    if (timeLeft <= 10) return 'text-red-500';
+    if (timeLeft <= 20) return 'text-amber-500';
+    return 'text-[#fafafa]';
   };
 
   const getCategoryLabel = (category) => {
