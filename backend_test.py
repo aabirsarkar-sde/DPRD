@@ -69,7 +69,7 @@ class PRDGeneratorAPITester:
                     has_all_categories = len(set(categories)) >= 6  # At least 6 different categories
                     
                     if has_all_categories:
-                        details += ", All required categories present"
+                        details += f", Categories found: {len(set(categories))}/7"
                         # Check question structure
                         valid_structure = True
                         for q in questions:
