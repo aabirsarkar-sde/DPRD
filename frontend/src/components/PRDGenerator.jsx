@@ -324,18 +324,29 @@ const PRDGenerator = () => {
         {step === 2 && (
           <div className="animate-fade-in">
             <div className="mb-10">
-              <button
-                onClick={() => setStep(1)}
-                className="flex items-center gap-1 text-[#71717a] hover:text-[#a1a1aa] text-sm mb-6"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Back to idea
-              </button>
+              <div className="flex items-center justify-between mb-6">
+                <button
+                  onClick={() => setStep(1)}
+                  className="flex items-center gap-1 text-[#71717a] hover:text-[#a1a1aa] text-sm"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to idea
+                </button>
+                
+                {/* Timer */}
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-lg bg-[#111113] border ${timeLeft <= 10 ? 'border-red-500/50' : 'border-[#27272a]'}`}>
+                  <Clock className={`w-4 h-4 ${getTimerColor()}`} />
+                  <span className={`font-mono text-lg font-semibold ${getTimerColor()}`}>
+                    {formatTime(timeLeft)}
+                  </span>
+                </div>
+              </div>
+              
               <h1 className="text-3xl font-semibold text-[#fafafa] mb-3 tracking-tight">
-                Let's clarify your vision
+                60-Second Challenge
               </h1>
               <p className="text-[#71717a] text-base">
-                Answer these {questions.length} questions to generate a precise, AI-optimized PRD that saves coding credits.
+                Answer these {questions.length} questions quickly to generate your AI-optimized PRD.
               </p>
               <div className="mt-4 flex items-center gap-2 text-sm text-[#52525b]">
                 <span>{Object.keys(answers).length} of {questions.length} answered</span>
@@ -408,9 +419,11 @@ const PRDGenerator = () => {
 
               <div className="flex justify-between items-center pt-6 border-t border-[#1f1f23]">
                 <p className="text-sm text-[#52525b]">
-                  {Object.keys(answers).length === questions.length 
-                    ? "All questions answered. Ready to generate!" 
-                    : `${questions.length - Object.keys(answers).length} more to go`}
+                  {timeLeft === 0 
+                    ? "Time's up! Generate your PRD now."
+                    : Object.keys(answers).length === questions.length 
+                      ? "All done! Generate your PRD." 
+                      : `${questions.length - Object.keys(answers).length} more to go`}
                 </p>
                 <Button
                   data-testid="generate-prd-btn"
