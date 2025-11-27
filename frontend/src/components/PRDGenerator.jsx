@@ -65,12 +65,28 @@ const PRDGenerator = () => {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(prd);
+      // Try modern clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(prd);
+      } else {
+        // Fallback for older browsers or restricted contexts
+        const textArea = document.createElement("textarea");
+        textArea.value = prd;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
       setCopied(true);
       toast.success("Copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      toast.error("Failed to copy");
+      console.error("Copy failed:", error);
+      toast.error("Failed to copy - please select and copy manually");
     }
   };
 
