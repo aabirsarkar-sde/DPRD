@@ -104,8 +104,25 @@ const PRDGenerator = () => {
       auth: "Authentication",
       data_complexity: "Data Architecture",
       edge_cases: "Edge Cases",
+      ui_layout: "UI Layout",
+      ui_components: "UI Components",
+      features: "Feature Scope",
+      integrations: "Integrations",
     };
     return labels[category] || category;
+  };
+
+  const getCategoryIcon = (category) => {
+    const icons = {
+      auth: "🔐",
+      data_complexity: "🗄️",
+      edge_cases: "⚠️",
+      ui_layout: "📐",
+      ui_components: "🧩",
+      features: "✨",
+      integrations: "🔗",
+    };
+    return icons[category] || "❓";
   };
 
   const renderMarkdown = (text) => {
