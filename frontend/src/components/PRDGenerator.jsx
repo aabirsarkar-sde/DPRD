@@ -325,31 +325,32 @@ const PRDGenerator = () => {
                     className="space-y-2"
                   >
                     {q.options.map((opt) => (
-                      <div
+                      <label
                         key={opt.value}
+                        htmlFor={`${q.id}-${opt.value}`}
                         className={`flex items-start space-x-3 p-3 rounded-md cursor-pointer group transition-colors ${
                           answers[q.id] === opt.value 
                             ? 'bg-[#1f1f23] border border-[#3f3f46]' 
                             : 'hover:bg-[#18181b] border border-transparent'
                         }`}
+                        onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: opt.value }))}
                       >
                         <RadioGroupItem
                           value={opt.value}
                           id={`${q.id}-${opt.value}`}
                           data-testid={`option-${q.id}-${opt.value}`}
-                          className="border-[#3f3f46] text-[#fafafa] mt-0.5"
+                          className="border-[#3f3f46] text-[#fafafa] mt-0.5 shrink-0"
                         />
-                        <Label
-                          htmlFor={`${q.id}-${opt.value}`}
-                          className={`cursor-pointer leading-relaxed text-sm ${
+                        <span
+                          className={`leading-relaxed text-sm ${
                             answers[q.id] === opt.value 
                               ? 'text-[#fafafa]' 
                               : 'text-[#a1a1aa] group-hover:text-[#fafafa]'
                           }`}
                         >
                           {opt.label}
-                        </Label>
-                      </div>
+                        </span>
+                      </label>
                     ))}
                   </RadioGroup>
                 </div>
