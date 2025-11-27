@@ -304,8 +304,11 @@ const PRDGenerator = () => {
             <div className="mt-16 pt-8 border-t border-[#1f1f23]">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
                 <div className="space-y-2">
-                  <div className="text-[#fafafa] font-medium">Smart Questions</div>
-                  <p className="text-[#52525b]">AI generates tailored questions about auth, UI, data, and features</p>
+                  <div className="text-[#fafafa] font-medium flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    60-Second Challenge
+                  </div>
+                  <p className="text-[#52525b]">Answer quick MCQs about auth, UI, data & features</p>
                 </div>
                 <div className="space-y-2">
                   <div className="text-[#fafafa] font-medium">AI-Optimized Output</div>
