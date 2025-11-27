@@ -512,6 +512,60 @@ const PRDGenerator = () => {
           </div>
         )}
 
+        {/* Step 2.5: Generating PRD with Tips */}
+        {step === 2.5 && (
+          <div className="animate-fade-in">
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+              <div className="mb-8">
+                <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-[#111113] border border-[#27272a] flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 text-[#fafafa] animate-spin" />
+                </div>
+                <h1 className="text-3xl font-semibold text-[#fafafa] mb-3 tracking-tight">
+                  Crafting Your PRD
+                </h1>
+                <p className="text-[#71717a] text-base max-w-md">
+                  Our AI is generating a detailed, implementation-ready PRD based on your inputs...
+                </p>
+              </div>
+
+              {/* Tips Section */}
+              <div className="w-full max-w-lg">
+                <div className="bg-[#111113] border border-[#1f1f23] rounded-lg p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Lightbulb className="w-5 h-5 text-amber-500" />
+                    <span className="text-sm font-medium text-[#a1a1aa] uppercase tracking-wider">
+                      PRD Tip {currentTipIndex + 1}/{PRD_TIPS.length}
+                    </span>
+                  </div>
+                  <div className="min-h-[80px]">
+                    <h3 className="text-[#fafafa] font-semibold mb-2">
+                      {PRD_TIPS[currentTipIndex].title}
+                    </h3>
+                    <p className="text-[#71717a] text-sm leading-relaxed">
+                      {PRD_TIPS[currentTipIndex].description}
+                    </p>
+                  </div>
+                  {/* Progress dots */}
+                  <div className="flex justify-center gap-1.5 mt-6">
+                    {PRD_TIPS.map((_, i) => (
+                      <div
+                        key={i}
+                        className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                          i === currentTipIndex ? 'bg-[#fafafa]' : 'bg-[#3f3f46]'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <p className="text-[#52525b] text-xs mt-4">
+                  This usually takes 30-60 seconds for a comprehensive PRD
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Step 3: PRD Output */}
         {step === 3 && (
           <div className="animate-fade-in">
