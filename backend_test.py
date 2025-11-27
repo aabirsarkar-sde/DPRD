@@ -110,7 +110,12 @@ class PRDGeneratorAPITester:
             "answers": {
                 "q1": "basic_auth",
                 "q2": "simple_storage", 
-                "q3": "basic_validation"
+                "q3": "basic_validation",
+                "q4": "minimal_ui",
+                "q5": "core_features",
+                "q6": "basic_errors",
+                "q7": "no_integrations",
+                "q8": "simple_deployment"
             }
         }
         
