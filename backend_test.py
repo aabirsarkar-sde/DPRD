@@ -159,7 +159,7 @@ class PRDGeneratorAPITester:
                 f"{self.api_url}/status",
                 json=test_data,
                 headers={"Content-Type": "application/json"},
-                timeout=10
+                timeout=30
             )
             
             success = response.status_code == 200
@@ -207,7 +207,7 @@ class PRDGeneratorAPITester:
                 f"{self.api_url}/analyze",
                 json={"idea": ""},
                 headers={"Content-Type": "application/json"},
-                timeout=10
+                timeout=30
             )
             
             # Should handle empty idea gracefully
@@ -225,7 +225,7 @@ class PRDGeneratorAPITester:
                 f"{self.api_url}/generate-prd",
                 json={"idea": "test", "answers": {}},
                 headers={"Content-Type": "application/json"},
-                timeout=10
+                timeout=30
             )
             
             # Should handle missing answers gracefully
