@@ -150,10 +150,6 @@ const PRDGenerator = () => {
       setGenerating(false);
     }
   };
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleCopy = async () => {
     try {
