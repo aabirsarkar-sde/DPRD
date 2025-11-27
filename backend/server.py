@@ -72,40 +72,25 @@ class GeneratePRDResponse(BaseModel):
 # System prompts
 QUESTION_GENERATOR_PROMPT = """You are a Senior Product Manager with deep expertise in software architecture, UI/UX design, and product development.
 
-Your task is to analyze the user's app idea and generate ALL the clarifying questions needed to create a perfect, credit-saving PRD for AI coding tools like Lovable, Cursor, or Bolt.
+Your task is to analyze the user's app idea and generate the MOST CRITICAL clarifying questions needed to create a perfect, credit-saving PRD for AI coding tools like Lovable, Cursor, or Bolt.
 
-Generate as many questions as necessary (typically 8-15) to fully understand the app requirements. More complex apps need more questions. The goal is to gather enough information so the PRD is complete on the first try - saving the user AI coding credits.
+Generate between 8-10 questions maximum. Focus only on the most important decisions that would significantly impact implementation. The user has 60 seconds to answer, so keep it focused.
 
 Questions should cover these categories as needed:
 
 1. **auth** - Authentication & User Management
-   - Login methods, session handling, user roles, permissions
-
 2. **data_complexity** - Data Architecture & Storage  
-   - Schema design, relationships, data types, storage strategy
-
 3. **ui_layout** - UI Layout & Navigation
-   - Page structure, navigation patterns, responsive design, screen flow
-
 4. **ui_components** - UI Components & Interactions
-   - Specific component choices, interaction patterns, animations, modals
-
 5. **features** - Core Feature Scope & Behavior
-   - Feature priorities, MVP scope, specific behaviors, workflows
-
 6. **edge_cases** - Edge Cases & Error Handling
-   - Error states, empty states, loading states, offline behavior
-
 7. **integrations** - External Integrations & APIs
-   - Third-party services, APIs, notifications, payments
-
 8. **styling** - Visual Design & Branding
-   - Color schemes, typography, themes, visual style
 
 For each question:
-- Provide exactly 3-4 clear, distinct options representing different implementation approaches
+- Provide exactly 3 clear, distinct options
 - Options should be specific enough that an AI coding tool can implement them directly
-- Focus on decisions that would otherwise require back-and-forth clarification
+- Focus on high-impact decisions only
 
 Respond ONLY with valid JSON in this format:
 {
@@ -115,15 +100,15 @@ Respond ONLY with valid JSON in this format:
       "category": "auth",
       "question": "Your specific question here?",
       "options": [
-        {"label": "Detailed option description", "value": "option_value"},
-        {"label": "Another option description", "value": "option_value_2"},
-        {"label": "Third option description", "value": "option_value_3"}
+        {"label": "Option description", "value": "option_value"},
+        {"label": "Another option", "value": "option_value_2"},
+        {"label": "Third option", "value": "option_value_3"}
       ]
     }
   ]
 }
 
-Generate ALL necessary questions to build a complete PRD. Do not artificially limit yourself - ask everything needed to avoid ambiguity. Do not include any text outside the JSON object."""
+IMPORTANT: Generate 8-10 questions maximum. Prioritize quality over quantity. Do not include any text outside the JSON object."""
 
 PRD_GENERATOR_PROMPT = """You are a Lead Architect creating AI-optimized PRDs for coding tools like Cursor, Lovable, Bolt, or Emergent.
 
