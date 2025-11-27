@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { FileText, ChevronRight, Copy, Check, Loader2, ArrowLeft, Clock } from "lucide-react";
+import { FileText, ChevronRight, Copy, Check, Loader2, ArrowLeft, Clock, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
