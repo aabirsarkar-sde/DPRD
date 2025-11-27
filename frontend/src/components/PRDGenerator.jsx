@@ -11,6 +11,41 @@ import { Progress } from "@/components/ui/progress";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+const PRD_TIPS = [
+  {
+    title: "Be Specific with Tech Stack",
+    description: "Name exact libraries and versions (e.g., 'TanStack Query v5' not just 'data fetching library')"
+  },
+  {
+    title: "Define Edge Cases Early",
+    description: "Every feature should have error states, empty states, and loading states documented"
+  },
+  {
+    title: "Include UI Specifications",
+    description: "Specify colors (hex), spacing, typography, and component behaviors for consistent implementation"
+  },
+  {
+    title: "Write User Flows Step-by-Step",
+    description: "Break down each feature into numbered steps: User does X → System responds Y → User sees Z"
+  },
+  {
+    title: "Document API Contracts",
+    description: "Include request/response shapes for every endpoint to avoid backend/frontend mismatches"
+  },
+  {
+    title: "Prioritize with Phases",
+    description: "Split features into MVP, Enhanced, and Scale phases to focus development efforts"
+  },
+  {
+    title: "Think About Authentication First",
+    description: "Auth decisions affect data models, API design, and UI flows throughout the entire app"
+  },
+  {
+    title: "Consider Mobile Responsiveness",
+    description: "Define breakpoints and layout changes for different screen sizes upfront"
+  }
+];
+
 const PRDGenerator = () => {
   const [step, setStep] = useState(1);
   const [idea, setIdea] = useState("");
