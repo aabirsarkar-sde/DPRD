@@ -53,10 +53,13 @@ const PRDGenerator = () => {
   const [answers, setAnswers] = useState({});
   const [prd, setPrd] = useState("");
   const [loading, setLoading] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
   const [timerActive, setTimerActive] = useState(false);
+  const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const timerRef = useRef(null);
+  const tipIntervalRef = useRef(null);
 
   // Timer effect
   useEffect(() => {
@@ -75,6 +78,19 @@ const PRDGenerator = () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [timerActive]);
+
+  // Rotate tips while generating
+  useEffect(() => {
+    if (generating) {
+      setCurrentTipIndex(0);
+      tipIntervalRef.current = setInterval(() => {
+        setCurrentTipIndex((prev) => (prev + 1) % PRD_TIPS.length);
+      }, 4000);
+    }
+    return () => {
+      if (tipIntervalRef.current) clearInterval(tipIntervalRef.current);
+    };
+  }, [generating]);
 
   // Start timer when entering step 2
   useEffect(() => {
