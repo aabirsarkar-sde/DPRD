@@ -90,7 +90,7 @@ class PRDGeneratorAPITester:
                         details += f", Missing categories. Found: {categories}"
                 else:
                     success = False
-                    details += f", Expected 3 questions, got {len(questions)}"
+                    details += f", Expected 8 questions, got {len(questions)}"
             else:
                 try:
                     error_data = response.json()
