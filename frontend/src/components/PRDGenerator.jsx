@@ -271,23 +271,38 @@ const PRDGenerator = () => {
                 Back to idea
               </button>
               <h1 className="text-3xl font-semibold text-[#fafafa] mb-3 tracking-tight">
-                A few clarifications
+                Let's clarify your vision
               </h1>
               <p className="text-[#71717a] text-base">
-                Answer these questions to help generate a precise, implementation-ready PRD.
+                Answer these {questions.length} questions to generate a precise, AI-optimized PRD that saves coding credits.
               </p>
+              <div className="mt-4 flex items-center gap-2 text-sm text-[#52525b]">
+                <span>{Object.keys(answers).length} of {questions.length} answered</span>
+                <div className="flex-1 h-1 bg-[#1f1f23] rounded-full max-w-[200px]">
+                  <div 
+                    className="h-1 bg-[#fafafa] rounded-full transition-all duration-300"
+                    style={{ width: `${(Object.keys(answers).length / questions.length) * 100}%` }}
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-8">
+            <div className="space-y-6">
               {questions.map((q, index) => (
                 <div
                   key={q.id}
                   data-testid={`question-${index}`}
-                  className="bg-[#111113] border border-[#1f1f23] rounded-lg p-6"
+                  className={`bg-[#111113] border rounded-lg p-6 transition-colors ${
+                    answers[q.id] ? 'border-[#27272a]' : 'border-[#1f1f23]'
+                  }`}
                 >
                   <div className="flex items-center gap-2 mb-4">
+                    <span className="text-sm">{getCategoryIcon(q.category)}</span>
                     <span className="text-xs font-medium text-[#52525b] uppercase tracking-wider">
                       {getCategoryLabel(q.category)}
+                    </span>
+                    <span className="text-xs text-[#3f3f46] ml-auto">
+                      {index + 1}/{questions.length}
                     </span>
                   </div>
                   <p className="text-[#fafafa] font-medium mb-5">{q.question}</p>
@@ -296,12 +311,16 @@ const PRDGenerator = () => {
                     onValueChange={(value) =>
                       setAnswers((prev) => ({ ...prev, [q.id]: value }))
                     }
-                    className="space-y-3"
+                    className="space-y-2"
                   >
                     {q.options.map((opt) => (
                       <div
                         key={opt.value}
-                        className="flex items-start space-x-3 p-3 rounded-md hover:bg-[#18181b] cursor-pointer group"
+                        className={`flex items-start space-x-3 p-3 rounded-md cursor-pointer group transition-colors ${
+                          answers[q.id] === opt.value 
+                            ? 'bg-[#1f1f23] border border-[#3f3f46]' 
+                            : 'hover:bg-[#18181b] border border-transparent'
+                        }`}
                       >
                         <RadioGroupItem
                           value={opt.value}
@@ -311,7 +330,11 @@ const PRDGenerator = () => {
                         />
                         <Label
                           htmlFor={`${q.id}-${opt.value}`}
-                          className="text-[#a1a1aa] group-hover:text-[#fafafa] cursor-pointer leading-relaxed"
+                          className={`cursor-pointer leading-relaxed text-sm ${
+                            answers[q.id] === opt.value 
+                              ? 'text-[#fafafa]' 
+                              : 'text-[#a1a1aa] group-hover:text-[#fafafa]'
+                          }`}
                         >
                           {opt.label}
                         </Label>
@@ -321,12 +344,17 @@ const PRDGenerator = () => {
                 </div>
               ))}
 
-              <div className="flex justify-end pt-4">
+              <div className="flex justify-between items-center pt-6 border-t border-[#1f1f23]">
+                <p className="text-sm text-[#52525b]">
+                  {Object.keys(answers).length === questions.length 
+                    ? "All questions answered. Ready to generate!" 
+                    : `${questions.length - Object.keys(answers).length} more to go`}
+                </p>
                 <Button
                   data-testid="generate-prd-btn"
                   onClick={handleGeneratePRD}
                   disabled={loading || Object.keys(answers).length < questions.length}
-                  className="bg-[#fafafa] text-[#0a0a0b] hover:bg-[#e4e4e7] font-medium px-6 h-11 rounded-lg"
+                  className="bg-[#fafafa] text-[#0a0a0b] hover:bg-[#e4e4e7] font-medium px-6 h-11 rounded-lg disabled:opacity-40"
                 >
                   {loading ? (
                     <>
