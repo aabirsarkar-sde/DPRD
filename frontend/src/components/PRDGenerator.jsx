@@ -216,7 +216,7 @@ const PRDGenerator = () => {
                 What do you want to build?
               </h1>
               <p className="text-[#71717a] text-base">
-                Be as messy as you want. Describe your app idea, features, target users — anything.
+                Describe your app idea in detail. The more context you provide, the better your PRD will be.
               </p>
             </div>
 
@@ -225,7 +225,7 @@ const PRDGenerator = () => {
                 data-testid="idea-input"
                 value={idea}
                 onChange={(e) => setIdea(e.target.value)}
-                placeholder="I want to build an app that..."
+                placeholder="I want to build an app that... (describe features, target users, key functionality, any specific requirements)"
                 className="min-h-[240px] bg-[#111113] border-[#27272a] text-[#fafafa] placeholder:text-[#52525b] focus:border-[#3f3f46] focus:ring-0 text-base resize-none rounded-lg"
               />
 
@@ -252,9 +252,20 @@ const PRDGenerator = () => {
             </div>
 
             <div className="mt-16 pt-8 border-t border-[#1f1f23]">
-              <p className="text-[#52525b] text-sm">
-                Your idea will be analyzed to identify key decisions needed before generating a complete PRD.
-              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+                <div className="space-y-2">
+                  <div className="text-[#fafafa] font-medium">8 Smart Questions</div>
+                  <p className="text-[#52525b]">AI identifies key decisions about auth, UI, data, and features</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="text-[#fafafa] font-medium">AI-Optimized Output</div>
+                  <p className="text-[#52525b]">PRDs designed to work perfectly with Cursor, Lovable, Bolt</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="text-[#fafafa] font-medium">Save Credits</div>
+                  <p className="text-[#52525b]">Detailed specs mean fewer AI iterations and rewrites</p>
+                </div>
+              </div>
             </div>
           </div>
         )}
