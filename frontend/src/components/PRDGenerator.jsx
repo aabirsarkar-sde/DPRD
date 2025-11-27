@@ -305,12 +305,14 @@ const PRDGenerator = () => {
               <ChevronRight className="w-3 h-3" />
               <span className={step >= 2 ? "text-[#fafafa]" : ""}>Clarify</span>
               <ChevronRight className="w-3 h-3" />
+              <span className={step >= 2.5 ? "text-[#fafafa]" : ""}>Generate</span>
+              <ChevronRight className="w-3 h-3" />
               <span className={step >= 3 ? "text-[#fafafa]" : ""}>PRD</span>
             </div>
           </div>
         </div>
         <Progress 
-          value={step === 1 ? 33 : step === 2 ? 66 : 100} 
+          value={step === 1 ? 25 : step === 2 ? 50 : step === 2.5 ? 75 : 100} 
           className="h-0.5 bg-[#1f1f23]" 
         />
       </header>
