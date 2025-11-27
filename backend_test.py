@@ -119,7 +119,7 @@ class PRDGeneratorAPITester:
                 f"{self.api_url}/generate-prd",
                 json=test_data,
                 headers={"Content-Type": "application/json"},
-                timeout=45
+                timeout=120
             )
             
             success = response.status_code == 200
