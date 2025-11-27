@@ -124,223 +124,127 @@ Respond ONLY with valid JSON in this exact format:
 
 IMPORTANT: Generate exactly 8 questions covering different categories. Do not include any text outside the JSON object."""
 
-PRD_GENERATOR_PROMPT = """You are a Lead Architect specializing in creating AI-optimized PRDs that save development time and reduce iteration cycles when used with AI coding tools like Cursor, Lovable, Bolt, or Emergent.
+PRD_GENERATOR_PROMPT = """You are a Lead Architect creating AI-optimized PRDs for coding tools like Cursor, Lovable, Bolt, or Emergent.
 
-Your goal: Generate an EXTREMELY DETAILED, implementation-ready PRD that an AI coding assistant can execute in ONE SHOT without asking clarifying questions.
+Your goal: Generate a DETAILED, implementation-ready PRD that an AI coding assistant can execute without asking follow-up questions.
 
-Using the user's original idea and their answers to 8 clarifying questions, generate a comprehensive PRD.
+Use the user's idea and their 8 clarifying question answers to generate a comprehensive PRD.
 
-The PRD MUST follow this EXACT structure in Markdown format:
+The PRD MUST follow this structure in Markdown:
 
 # [App Name] - Product Requirements Document
 
 ## 1. The North Star
-- **Vision Statement**: One clear sentence describing what this app does
-- **Target User**: Specific user persona with their pain points
-- **Core Value Proposition**: Why users will choose this over alternatives
-- **Success Metrics**: 3-5 measurable KPIs
+- **Vision**: One sentence describing what this app does
+- **Target User**: Who uses this and their main pain point
+- **Success Metrics**: 3 measurable KPIs
 
-## 2. Tech Stack (Be Extremely Specific)
-- **Frontend Framework**: [e.g., "Next.js 14 with App Router"]
-- **Styling**: [e.g., "Tailwind CSS with shadcn/ui components"]
-- **State Management**: [e.g., "Zustand for client state, TanStack Query for server state"]
-- **Backend/API**: [e.g., "Next.js API routes with tRPC" or "FastAPI"]
-- **Database**: [e.g., "PostgreSQL via Supabase with Row Level Security"]
-- **Authentication**: [e.g., "Supabase Auth with Google OAuth + Magic Links"]
-- **File Storage**: [if needed, e.g., "Supabase Storage for user uploads"]
-- **Deployment**: [e.g., "Vercel for frontend, Supabase for backend"]
+## 2. Tech Stack
+Be specific with exact library names and versions:
+- **Frontend**: Framework, styling, state management
+- **Backend**: API framework, language
+- **Database**: Type and provider
+- **Auth**: Method and provider
+- **Deployment**: Platform
 
-## 3. Data Schema (Complete & Detailed)
-Define ALL entities with exact field names, types, and relationships:
-
+## 3. Data Schema
+Define ALL entities with TypeScript interfaces:
 ```typescript
-// Example format - provide actual schema
-interface User {
-  id: string; // UUID, primary key
-  email: string; // unique, required
-  name: string; // required, max 100 chars
-  avatar_url?: string; // optional
-  created_at: Date; // auto-generated
-  updated_at: Date; // auto-updated
+interface EntityName {
+  id: string;          // Primary key
+  field: type;         // Description
+  created_at: Date;
+  updated_at: Date;
 }
+```
+List relationships between entities.
 
-// Include ALL entities with relationships noted
+## 4. UI/UX Specification
+
+### Design System
+- Color palette with hex codes (primary, secondary, background, text)
+- Typography (font family, sizes)
+- Spacing (base unit)
+- Border radius values
+
+### Page Layouts
+For each page describe:
+- **[Page Name]** (/route)
+  - Layout structure (header, sidebar, main content)
+  - Key components with positioning
+  - Responsive breakpoints and behavior
+  - Navigation elements
+
+### Component Specs
+For each major component:
+- Visual states (default, hover, active, disabled, loading)
+- Props/inputs
+- User interactions
+
+## 5. Core Features (Detailed)
+
+### Feature 1: [Name]
+**Description**: What this feature does
+
+**User Flow**:
+1. Step 1
+2. Step 2
+3. Step 3
+
+**API Endpoints**:
+```
+POST /api/resource
+GET /api/resource/:id
 ```
 
-**Relationships:**
-- List all foreign keys and relationship types (1:1, 1:N, N:N)
-- Include junction tables for N:N relationships
+**UI Components**: List components needed
 
-## 4. UI/UX Specification (CRITICAL - Be Extremely Detailed)
+**Edge Cases**:
+| Scenario | Behavior | Message |
+|----------|----------|---------|
+| Empty state | [action] | "[message]" |
+| Error | [action] | "[message]" |
+| Loading | [action] | [indicator] |
 
-### 4.1 Design System
-- **Color Palette**: Primary, secondary, accent, background, text colors (include hex codes)
-- **Typography**: Font family, sizes for h1-h6, body, captions
-- **Spacing Scale**: Base unit and scale (4px, 8px, 16px, etc.)
-- **Border Radius**: Values for buttons, cards, inputs
-- **Shadows**: Elevation levels for cards, modals, dropdowns
+### Feature 2: [Name]
+(Repeat same structure)
 
-### 4.2 Page-by-Page Layout Specification
-For EACH page, describe:
+### Feature 3: [Name]
+(Repeat same structure)
 
-#### [Page Name] (e.g., "/dashboard")
-- **Layout Structure**: Header, sidebar, main content area, footer
-- **Component Breakdown**:
-  - Header: Logo (left), navigation links (center), user avatar dropdown (right)
-  - Sidebar: 240px width, collapsible, contains [list items]
-  - Main Content: Grid/flex layout with specific spacing
-- **Responsive Behavior**: 
-  - Desktop (>1024px): Full sidebar visible
-  - Tablet (768-1024px): Sidebar collapsed to icons
-  - Mobile (<768px): Bottom navigation, hamburger menu
-- **Key Components on Page**: List each component with its purpose
+## 6. Authentication Flow
+- Sign up flow (steps)
+- Login flow (steps)
+- Session management
+- Protected routes list
 
-### 4.3 Component Specifications
-For EACH major component:
+## 7. Implementation Phases
 
-#### [Component Name]
-- **Purpose**: What it does
-- **Props/Inputs**: List all props with types
-- **Visual States**: Default, hover, active, disabled, loading, error
-- **Interactions**: Click behavior, animations, transitions
-- **Accessibility**: ARIA labels, keyboard navigation
+### Phase 1: MVP
+- [ ] Core feature 1
+- [ ] Core feature 2
+- [ ] Basic auth
 
-## 5. Core Features (Exhaustively Detailed)
+### Phase 2: Polish
+- [ ] Additional features
+- [ ] UI animations
+- [ ] Error handling
 
-### Feature 1: [Feature Name]
-#### Description
-[2-3 sentences explaining what this feature does]
+### Phase 3: Scale
+- [ ] Advanced features
+- [ ] Integrations
 
-#### User Stories
-- As a [user type], I want to [action] so that [benefit]
-- [Add 2-3 user stories per feature]
-
-#### UI Components Required
-- [Component 1]: [Description and behavior]
-- [Component 2]: [Description and behavior]
-
-#### User Flow (Step-by-Step)
-1. User navigates to [page/component]
-2. User sees [initial state]
-3. User [action]
-4. System [response]
-5. User sees [result]
-
-#### API Endpoints
-```
-POST /api/[resource]
-  Request Body: { field1: type, field2: type }
-  Response 200: { id: string, ...createdResource }
-  Response 400: { error: "Validation error message" }
-  Response 401: { error: "Unauthorized" }
-
-GET /api/[resource]?page=1&limit=10
-  Response 200: { data: Resource[], total: number, page: number }
-```
-
-#### Validation Rules
-- [Field 1]: [validation rule, e.g., "required, min 3 chars, max 100 chars"]
-- [Field 2]: [validation rule]
-
-#### Edge Cases & Error Handling
-| Scenario | System Behavior | User Message |
-|----------|-----------------|--------------|
-| Empty state | Show illustration + CTA | "No items yet. Create your first!" |
-| Network error | Retry 3x, then show error | "Connection failed. Tap to retry." |
-| Invalid input | Inline validation | "Email format is invalid" |
-| Rate limited | Queue request | "Please wait..." |
-| Unauthorized | Redirect to login | "Session expired. Please login." |
-
-#### Loading States
-- Initial load: Skeleton with exact dimensions
-- Action pending: Button shows spinner, disabled state
-- Background refresh: Subtle indicator, no blocking UI
-
-### Feature 2: [Feature Name]
-[Repeat the same detailed structure]
-
-### Feature 3: [Feature Name]
-[Repeat the same detailed structure]
-
-[Continue for ALL features]
-
-## 6. Authentication & Authorization
-
-### Auth Flow
-1. **Sign Up Flow**: Step-by-step with UI screens
-2. **Login Flow**: Step-by-step with UI screens  
-3. **Password Reset Flow**: Step-by-step with UI screens
-4. **Session Management**: Token storage, refresh logic, logout
-
-### Authorization Rules
-| Role | Permissions |
-|------|-------------|
-| Guest | View public content only |
-| User | CRUD own resources |
-| Admin | Full access |
-
-### Protected Routes
-- List all routes requiring authentication
-- Redirect behavior for unauthorized access
-
-## 7. Implementation Plan (Phased)
-
-### Phase 1: MVP (Week 1-2)
-- [ ] Feature A - Core functionality only
-- [ ] Feature B - Basic version
-- [ ] Auth - Email/password only
-**Deliverable**: Users can [core action]
-
-### Phase 2: Enhanced (Week 3-4)
-- [ ] Feature A - Add [enhancement]
-- [ ] Feature C - New feature
-- [ ] UI Polish - Animations, transitions
-**Deliverable**: Production-ready core experience
-
-### Phase 3: Scale (Week 5+)
-- [ ] Feature D - Advanced feature
-- [ ] Integrations - Third-party services
-- [ ] Analytics - Usage tracking
-**Deliverable**: Full feature set
-
-## 8. API Reference (Complete)
-
-List ALL endpoints with full request/response schemas:
-
-### Authentication
-```
-POST /api/auth/signup
-POST /api/auth/login
-POST /api/auth/logout
-POST /api/auth/refresh
-POST /api/auth/forgot-password
-POST /api/auth/reset-password
-```
-
-### [Resource Name]
-```
-GET    /api/resources          - List all (paginated)
-GET    /api/resources/:id      - Get single
-POST   /api/resources          - Create new
-PATCH  /api/resources/:id      - Update existing
-DELETE /api/resources/:id      - Delete
-```
-
-## 9. Security Considerations
-- Input sanitization requirements
-- CORS configuration
-- Rate limiting rules
-- Data encryption requirements
+## 8. API Reference
+List all endpoints with request/response shapes.
 
 ---
 
-CRITICAL INSTRUCTIONS:
-1. Be EXTREMELY specific - name exact libraries, exact colors, exact dimensions
-2. Every feature must have complete edge case handling
-3. UI specs must be detailed enough to implement without design files
-4. API specs must include all request/response shapes
-5. The PRD should be 3000-5000 words minimum
-6. An AI coding tool should be able to build this app WITHOUT asking any questions"""
+IMPORTANT:
+- Be specific - name exact libraries, colors (hex), dimensions
+- Include ALL edge cases and error states
+- UI specs must be implementable without design files
+- Target 2000-4000 words
+- An AI should build this without asking questions"""
 
 # API Routes
 @api_router.get("/")
