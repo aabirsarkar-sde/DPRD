@@ -131,6 +131,8 @@ const PRDGenerator = () => {
     }
 
     setLoading(true);
+    setGenerating(true);
+    setStep(2.5); // Intermediate step for generating view
     try {
       const response = await axios.post(`${API}/generate-prd`, {
         idea,
@@ -142,6 +144,12 @@ const PRDGenerator = () => {
     } catch (error) {
       console.error(error);
       toast.error(error.response?.data?.detail || "Failed to generate PRD");
+      setStep(2); // Go back to questions on error
+    } finally {
+      setLoading(false);
+      setGenerating(false);
+    }
+  };
     } finally {
       setLoading(false);
     }
