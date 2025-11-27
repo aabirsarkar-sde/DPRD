@@ -108,8 +108,9 @@ const PRDGenerator = () => {
       ui_components: "UI Components",
       features: "Feature Scope",
       integrations: "Integrations",
+      styling: "Visual Design",
     };
-    return labels[category] || category;
+    return labels[category] || category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
   const getCategoryIcon = (category) => {
@@ -121,8 +122,9 @@ const PRDGenerator = () => {
       ui_components: "🧩",
       features: "✨",
       integrations: "🔗",
+      styling: "🎨",
     };
-    return icons[category] || "❓";
+    return icons[category] || "📋";
   };
 
   const renderMarkdown = (text) => {
