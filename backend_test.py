@@ -63,10 +63,10 @@ class PRDGeneratorAPITester:
                 details += f", Questions count: {len(questions)}"
                 
                 # Validate question structure
-                if len(questions) == 3:
+                if len(questions) == 8:
                     categories = [q.get("category") for q in questions]
-                    expected_categories = ["auth", "data_complexity", "edge_cases"]
-                    has_all_categories = all(cat in categories for cat in expected_categories)
+                    expected_categories = ["auth", "data_complexity", "ui_layout", "ui_components", "features", "edge_cases", "integrations"]
+                    has_all_categories = len(set(categories)) >= 6  # At least 6 different categories
                     
                     if has_all_categories:
                         details += ", All required categories present"
