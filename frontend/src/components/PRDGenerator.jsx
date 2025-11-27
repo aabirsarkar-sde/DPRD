@@ -19,6 +19,39 @@ const PRDGenerator = () => {
   const [prd, setPrd] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [timerActive, setTimerActive] = useState(false);
+  const timerRef = useRef(null);
+
+  // Timer effect
+  useEffect(() => {
+    if (timerActive && timeLeft > 0) {
+      timerRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [timerActive]);
+
+  // Start timer when entering step 2
+  useEffect(() => {
+    if (step === 2 && !timerActive) {
+      setTimeLeft(60);
+      setTimerActive(true);
+    }
+    if (step !== 2) {
+      setTimerActive(false);
+      if (timerRef.current) clearInterval(timerRef.current);
+    }
+  }, [step]);
 
   const handleAnalyze = async () => {
     if (!idea.trim()) {
