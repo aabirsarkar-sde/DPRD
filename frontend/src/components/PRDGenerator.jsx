@@ -326,6 +326,16 @@ const PRDGenerator = () => {
         {/* Step 2: Clarifying Questions */}
         {step === 2 && (
           <div className="animate-fade-in">
+            {/* Sticky Timer Overlay */}
+            <div className="fixed top-20 right-6 z-50">
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-lg bg-[#111113]/95 backdrop-blur-sm border shadow-lg ${timeLeft <= 10 ? 'border-red-500/50' : timeLeft <= 20 ? 'border-amber-500/50' : 'border-[#27272a]'}`}>
+                <Clock className={`w-4 h-4 ${getTimerColor()}`} />
+                <span className={`font-mono text-lg font-semibold ${getTimerColor()}`}>
+                  {formatTime(timeLeft)}
+                </span>
+              </div>
+            </div>
+
             <div className="mb-10">
               <div className="flex items-center justify-between mb-6">
                 <button
@@ -335,14 +345,6 @@ const PRDGenerator = () => {
                   <ArrowLeft className="w-4 h-4" />
                   Back to idea
                 </button>
-                
-                {/* Timer */}
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-lg bg-[#111113] border ${timeLeft <= 10 ? 'border-red-500/50' : 'border-[#27272a]'}`}>
-                  <Clock className={`w-4 h-4 ${getTimerColor()}`} />
-                  <span className={`font-mono text-lg font-semibold ${getTimerColor()}`}>
-                    {formatTime(timeLeft)}
-                  </span>
-                </div>
               </div>
               
               <h1 className="text-3xl font-semibold text-[#fafafa] mb-3 tracking-tight">
