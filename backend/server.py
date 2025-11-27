@@ -70,16 +70,34 @@ class GeneratePRDResponse(BaseModel):
     prd: str
 
 # System prompts
-QUESTION_GENERATOR_PROMPT = """You are a Senior Product Manager with deep expertise in software architecture and product development.
+QUESTION_GENERATOR_PROMPT = """You are a Senior Product Manager with deep expertise in software architecture, UI/UX design, and product development.
 
-Your task is to analyze the user's app idea and identify the top 3 critical ambiguities that would block development.
+Your task is to analyze the user's app idea and identify 8-10 critical ambiguities that would block development or lead to wasted AI coding credits.
 
-Generate exactly 3 multiple-choice questions to resolve these ambiguities. Each question MUST focus on one of these categories:
-1. Authentication & User Management (auth)
-2. Data Complexity & Storage (data_complexity) 
-3. Edge Cases & Error Handling (edge_cases)
+Generate exactly 8 multiple-choice questions to resolve these ambiguities. Questions MUST cover ALL of these categories:
 
-For each question, provide exactly 3-4 clear, distinct options that represent different implementation approaches.
+1. **auth** - Authentication & User Management (1-2 questions)
+   - Login methods, session handling, user roles
+
+2. **data_complexity** - Data Architecture & Storage (1-2 questions)
+   - Schema design, relationships, data types
+
+3. **ui_layout** - UI Layout & Navigation (1-2 questions)
+   - Page structure, navigation patterns, responsive design
+
+4. **ui_components** - UI Components & Interactions (1-2 questions)
+   - Specific component choices, interaction patterns, animations
+
+5. **features** - Core Feature Scope (1-2 questions)
+   - Feature priorities, MVP vs future, specific behaviors
+
+6. **edge_cases** - Edge Cases & Error Handling (1 question)
+   - Error states, empty states, loading states
+
+7. **integrations** - External Integrations (1 question)
+   - Third-party services, APIs, notifications
+
+For each question, provide exactly 3-4 clear, distinct options that represent different implementation approaches. Options should be specific enough that an AI coding tool can implement them directly.
 
 Respond ONLY with valid JSON in this exact format:
 {
@@ -87,29 +105,24 @@ Respond ONLY with valid JSON in this exact format:
     {
       "id": "q1",
       "category": "auth",
-      "question": "Your question here?",
+      "question": "Your specific question here?",
       "options": [
-        {"label": "Option A description", "value": "option_a"},
-        {"label": "Option B description", "value": "option_b"},
-        {"label": "Option C description", "value": "option_c"}
+        {"label": "Detailed option A description", "value": "option_a"},
+        {"label": "Detailed option B description", "value": "option_b"},
+        {"label": "Detailed option C description", "value": "option_c"}
       ]
     },
     {
       "id": "q2",
-      "category": "data_complexity",
-      "question": "Your question here?",
-      "options": [...]
-    },
-    {
-      "id": "q3",
-      "category": "edge_cases",
+      "category": "ui_layout",
       "question": "Your question here?",
       "options": [...]
     }
+    // ... continue for all 8 questions
   ]
 }
 
-Do not include any text outside the JSON object."""
+IMPORTANT: Generate exactly 8 questions covering different categories. Do not include any text outside the JSON object."""
 
 PRD_GENERATOR_PROMPT = """You are a Lead Architect with expertise in building production-ready software systems.
 
