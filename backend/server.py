@@ -259,26 +259,35 @@ async def get_status_checks():
 async def analyze_idea(request: AnalyzeRequest):
     """Analyze user's idea and generate clarifying questions"""
     try:
-        if not EMERGENT_LLM_KEY:
-            raise HTTPException(status_code=500, detail="LLM API key not configured")
+        if not GOOGLE_API_KEY:
+            raise HTTPException(status_code=500, detail="Google API key not configured")
         
-        chat = LlmChat(
-            api_key=EMERGENT_LLM_KEY,
-            session_id=f"analyze-{uuid.uuid4()}",
-            system_message=QUESTION_GENERATOR_PROMPT
-        ).with_model("gemini", "gemini-2.5-flash")
+        # Call Gemini API directly
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(
+                f"{GEMINI_API_URL}?key={GOOGLE_API_KEY}",
+                headers={"Content-Type": "application/json"},
+                json={
+                    "contents": [
+                        {
+                            "parts": [
+                                {"text": f"{QUESTION_GENERATOR_PROMPT}\n\nAnalyze this app idea and generate clarifying questions:\n\n{request.idea}"}
+                            ]
+                        }
+                    ]
+                }
+            )
+            response.raise_for_status()
+            result = response.json()
         
-        user_message = UserMessage(
-            text=f"Analyze this app idea and generate 3 clarifying questions:\n\n{request.idea}"
-        )
-        
-        response = await chat.send_message(user_message)
-        logger.info(f"LLM Response: {response}")
+        # Extract text from Gemini response
+        llm_response = result["candidates"][0]["content"]["parts"][0]["text"]
+        logger.info(f"LLM Response received, length: {len(llm_response)}")
         
         # Parse the JSON response
         import json
         # Clean response - remove markdown code blocks if present
-        clean_response = response.strip()
+        clean_response = llm_response.strip()
         if clean_response.startswith("```json"):
             clean_response = clean_response[7:]
         if clean_response.startswith("```"):
@@ -301,7 +310,7 @@ async def analyze_idea(request: AnalyzeRequest):
         return AnalyzeResponse(questions=questions)
         
     except json.JSONDecodeError as e:
-        logger.error(f"JSON parse error: {e}, Response: {response}")
+        logger.error(f"JSON parse error: {e}, Response: {llm_response}")
         raise HTTPException(status_code=500, detail="Failed to parse LLM response")
     except Exception as e:
         logger.error(f"Error analyzing idea: {e}")
@@ -311,20 +320,15 @@ async def analyze_idea(request: AnalyzeRequest):
 async def generate_prd(request: GeneratePRDRequest):
     """Generate PRD from idea and answers"""
     try:
-        if not EMERGENT_LLM_KEY:
-            raise HTTPException(status_code=500, detail="LLM API key not configured")
-        
-        chat = LlmChat(
-            api_key=EMERGENT_LLM_KEY,
-            session_id=f"prd-{uuid.uuid4()}",
-            system_message=PRD_GENERATOR_PROMPT
-        ).with_model("gemini", "gemini-2.5-flash")
+        if not GOOGLE_API_KEY:
+            raise HTTPException(status_code=500, detail="Google API key not configured")
         
         # Format the answers for context
         answers_text = "\n".join([f"- {k}: {v}" for k, v in request.answers.items()])
         
-        user_message = UserMessage(
-            text=f"""Generate a comprehensive PRD for this app idea:
+        prompt = f"""{PRD_GENERATOR_PROMPT}
+
+Generate a comprehensive PRD for this app idea:
 
 ## Original Idea:
 {request.idea}
@@ -333,12 +337,30 @@ async def generate_prd(request: GeneratePRDRequest):
 {answers_text}
 
 Generate the full PRD now."""
-        )
         
-        response = await chat.send_message(user_message)
-        logger.info(f"PRD Generated successfully")
+        # Call Gemini API directly
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            response = await client.post(
+                f"{GEMINI_API_URL}?key={GOOGLE_API_KEY}",
+                headers={"Content-Type": "application/json"},
+                json={
+                    "contents": [
+                        {
+                            "parts": [
+                                {"text": prompt}
+                            ]
+                        }
+                    ]
+                }
+            )
+            response.raise_for_status()
+            result = response.json()
         
-        return GeneratePRDResponse(prd=response)
+        # Extract text from Gemini response
+        prd_response = result["candidates"][0]["content"]["parts"][0]["text"]
+        logger.info(f"PRD Generated successfully, length: {len(prd_response)}")
+        
+        return GeneratePRDResponse(prd=prd_response)
         
     except Exception as e:
         logger.error(f"Error generating PRD: {e}")
