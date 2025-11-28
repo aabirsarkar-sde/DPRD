@@ -209,9 +209,10 @@ const PRDGenerator = () => {
       edge_cases: "Edge Cases",
       ui_layout: "UI Layout",
       ui_components: "UI Components",
+      ui_style: "Visual Design",
       features: "Feature Scope",
       integrations: "Integrations",
-      styling: "Visual Design",
+      styling: "Styling",
     };
     return labels[category] || category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
@@ -223,6 +224,7 @@ const PRDGenerator = () => {
       edge_cases: "⚠️",
       ui_layout: "📐",
       ui_components: "🧩",
+      ui_style: "🎨",
       features: "✨",
       integrations: "🔗",
       styling: "🎨",
