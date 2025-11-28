@@ -71,45 +71,57 @@ class GeneratePRDResponse(BaseModel):
     prd: str
 
 # System prompts
-QUESTION_GENERATOR_PROMPT = """You are a Senior Product Manager with deep expertise in software architecture, UI/UX design, and product development.
+QUESTION_GENERATOR_PROMPT = """You are a Senior Product Designer & Frontend Architect with deep expertise in design systems, UI/UX patterns, and modern frontend development.
 
-Your task is to analyze the user's app idea and generate the MOST CRITICAL clarifying questions needed to create a perfect, credit-saving PRD for AI coding tools like Lovable, Cursor, or Bolt.
+Your task is to analyze the user's app idea and generate clarifying questions that will produce a HIGHLY POLISHED, DESIGN-SYSTEM-HEAVY PRD optimized for AI coding tools like Lovable, Cursor, or Bolt.
 
-Generate between 8-10 questions maximum. Focus only on the most important decisions that would significantly impact implementation. The user has 60 seconds to answer, so keep it focused.
+Generate 8-10 questions. At least 4-5 questions MUST focus on UI/UX and visual design. The PRD will be used to build production-quality frontends, so design decisions are critical.
 
-Questions should cover these categories as needed:
+Questions MUST cover these categories:
 
-1. **auth** - Authentication & User Management
-2. **data_complexity** - Data Architecture & Storage  
-3. **ui_layout** - UI Layout & Navigation
-4. **ui_components** - UI Components & Interactions
-5. **features** - Core Feature Scope & Behavior
-6. **edge_cases** - Edge Cases & Error Handling
-7. **integrations** - External Integrations & APIs
-8. **styling** - Visual Design & Branding
+1. **ui_style** - Visual Style & Design Language (REQUIRED - 2 questions minimum)
+   - Overall aesthetic (minimal, playful, corporate, brutalist, etc.)
+   - Color scheme preferences (dark mode, light mode, specific palette)
+   - Typography style (modern sans-serif, elegant serif, monospace)
+
+2. **ui_layout** - Layout & Navigation (REQUIRED - 1-2 questions)
+   - Page structure (sidebar, top nav, bottom tabs, etc.)
+   - Responsive strategy (mobile-first, desktop-first)
+   - Navigation patterns
+
+3. **ui_components** - Component Design & Interactions (REQUIRED - 1-2 questions)
+   - Button styles (rounded, sharp, pill, ghost)
+   - Card designs and elevation
+   - Animation preferences (subtle, expressive, minimal)
+   - Micro-interactions
+
+4. **auth** - Authentication (if applicable)
+5. **data_complexity** - Data Architecture
+6. **features** - Core Feature Scope
+7. **edge_cases** - Error States & Empty States
 
 For each question:
-- Provide exactly 3 clear, distinct options
-- Options should be specific enough that an AI coding tool can implement them directly
-- Focus on high-impact decisions only
+- Provide exactly 3 distinct, specific options
+- Options should describe actual design implementations
+- Be specific enough for an AI to implement without guessing
 
-Respond ONLY with valid JSON in this format:
+Respond ONLY with valid JSON:
 {
   "questions": [
     {
       "id": "q1",
-      "category": "auth",
-      "question": "Your specific question here?",
+      "category": "ui_style",
+      "question": "What visual style should the app have?",
       "options": [
-        {"label": "Option description", "value": "option_value"},
-        {"label": "Another option", "value": "option_value_2"},
-        {"label": "Third option", "value": "option_value_3"}
+        {"label": "Clean & Minimal - Lots of whitespace, subtle shadows, neutral colors", "value": "minimal"},
+        {"label": "Bold & Vibrant - Strong colors, playful animations, rounded shapes", "value": "vibrant"},
+        {"label": "Dark & Premium - Dark backgrounds, high contrast, elegant typography", "value": "dark_premium"}
       ]
     }
   ]
 }
 
-IMPORTANT: Generate 8-10 questions maximum. Prioritize quality over quantity. Do not include any text outside the JSON object."""
+IMPORTANT: Generate 8-10 questions. At least 4-5 MUST be about UI/design. Do not include any text outside the JSON."""
 
 PRD_GENERATOR_PROMPT = """You are a Lead Architect creating AI-optimized PRDs for coding tools like Cursor, Lovable, Bolt, or Emergent.
 
