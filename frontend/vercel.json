@@ -14,7 +14,10 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "env": {
+    "REACT_APP_BACKEND_URL": "https://dprd-backend.onrender.com"
+  }
 }
 
 
