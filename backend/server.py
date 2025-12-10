@@ -8,8 +8,12 @@ from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import httpx
+import jwt
+from passlib.context import CryptContext
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import Depends, status
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -22,6 +26,14 @@ db = client[os.environ['DB_NAME']]
 # Google Gemini API Configuration
 GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+
+# Auth Configuration
+SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-please-change-in-prod')
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 # Create the main app without a prefix
 app = FastAPI()
@@ -46,6 +58,24 @@ class StatusCheck(BaseModel):
 class StatusCheckCreate(BaseModel):
     client_name: str
 
+# Auth Models
+class User(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    email: str
+    password_hash: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class UserCreate(BaseModel):
+    email: str
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+
 # PRD Generator Models
 class AnalyzeRequest(BaseModel):
     idea: str
@@ -69,6 +99,26 @@ class GeneratePRDRequest(BaseModel):
 
 class GeneratePRDResponse(BaseModel):
     prd: str
+
+class SavedPRD(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str  # Link to User
+    idea: str
+    content: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class SavedPRDCreate(BaseModel):
+    idea: str
+class SavedPRDCreate(BaseModel):
+    idea: str
+    content: str
+
+class SavedPRDUpdateIdea(BaseModel):
+    idea: str
+
+class SavedPRDUpdateContent(BaseModel):
+    content: str
 
 # System prompts
 QUESTION_GENERATOR_PROMPT = """You are a Senior Product Designer & Frontend Architect with deep expertise in design systems, UI/UX patterns, and modern frontend development.
@@ -401,6 +451,83 @@ Relationships:
 async def root():
     return {"message": "PRD Generator API"}
 
+# Auth Utils
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+        token_data = TokenData(email=email)
+    except jwt.PyJWTError:
+        raise credentials_exception
+        
+    user = await db.users.find_one({"email": token_data.email})
+    if user is None:
+        raise credentials_exception
+    return User(**user)
+
+# Auth Endpoints
+@api_router.post("/auth/signup", response_model=Token)
+async def signup(user: UserCreate):
+    existing_user = await db.users.find_one({"email": user.email})
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    hashed_password = get_password_hash(user.password)
+    new_user = User(
+        email=user.email,
+        password_hash=hashed_password
+    )
+    
+    await db.users.insert_one(new_user.model_dump())
+    
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": new_user.email}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@api_router.post("/auth/login", response_model=Token)
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = await db.users.find_one({"email": form_data.username})
+    if not user or not verify_password(form_data.password, user['password_hash']):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user['email']}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):
     status_dict = input.model_dump()
@@ -528,6 +655,78 @@ Generate the full PRD now."""
     except Exception as e:
         logger.error(f"Error generating PRD: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/prds", response_model=SavedPRD)
+async def save_prd(input: SavedPRDCreate, user: User = Depends(get_current_user)):
+    prd_dict = input.model_dump()
+    prd_obj = SavedPRD(**prd_dict, user_id=user.id)
+    doc = prd_obj.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    _ = await db.saved_prds.insert_one(doc)
+    return prd_obj
+
+@api_router.get("/prds", response_model=List[SavedPRD])
+async def get_saved_prds(user: User = Depends(get_current_user)):
+    saved_prds = await db.saved_prds.find({"user_id": user.id}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    for prd in saved_prds:
+        if isinstance(prd['created_at'], str):
+            prd['created_at'] = datetime.fromisoformat(prd['created_at'])
+    return saved_prds
+
+@api_router.get("/prds/{prd_id}", response_model=SavedPRD)
+async def get_saved_prd(prd_id: str, user: User = Depends(get_current_user)):
+    prd = await db.saved_prds.find_one({"id": prd_id, "user_id": user.id}, {"_id": 0})
+    if not prd:
+        raise HTTPException(status_code=404, detail="PRD not found")
+    if isinstance(prd['created_at'], str):
+        prd['created_at'] = datetime.fromisoformat(prd['created_at'])
+    return prd
+
+@api_router.patch("/prds/{prd_id}/idea", response_model=SavedPRD)
+async def update_prd_idea(prd_id: str, input: SavedPRDUpdateIdea, user: User = Depends(get_current_user)):
+    result = await db.saved_prds.find_one_and_update(
+        {"id": prd_id, "user_id": user.id},
+        {"$set": {"idea": input.idea}},
+        return_document=True
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="PRD not found")
+    if isinstance(result['created_at'], str):
+        result['created_at'] = datetime.fromisoformat(result['created_at'])
+    return result
+
+@api_router.put("/prds/{prd_id}/content", response_model=SavedPRD)
+async def update_prd_content(prd_id: str, input: SavedPRDUpdateContent, user: User = Depends(get_current_user)):
+    result = await db.saved_prds.find_one_and_update(
+        {"id": prd_id, "user_id": user.id},
+        {"$set": {"content": input.content}},
+        return_document=True
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="PRD not found")
+    if isinstance(result['created_at'], str):
+        result['created_at'] = datetime.fromisoformat(result['created_at'])
+    return result
+
+@api_router.delete("/prds/{prd_id}/content", response_model=SavedPRD)
+async def delete_prd_content(prd_id: str, user: User = Depends(get_current_user)):
+    result = await db.saved_prds.find_one_and_update(
+        {"id": prd_id, "user_id": user.id},
+        {"$set": {"content": ""}},
+        return_document=True
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="PRD not found")
+    if isinstance(result['created_at'], str):
+        result['created_at'] = datetime.fromisoformat(result['created_at'])
+    return result
+
+@api_router.delete("/prds/{prd_id}")
+async def delete_saved_prd(prd_id: str, user: User = Depends(get_current_user)):
+    result = await db.saved_prds.delete_one({"id": prd_id, "user_id": user.id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="PRD not found")
+    return {"message": "PRD deleted successfully"}
 
 # Include the router in the main app
 app.include_router(api_router)

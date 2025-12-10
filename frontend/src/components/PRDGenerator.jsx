@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { FileText, ChevronRight, Copy, Check, Loader2, ArrowLeft, Clock, Lightbulb } from "lucide-react";
+import { FileText, ChevronRight, Copy, Check, Loader2, ArrowLeft, Clock, Lightbulb, Save, History as HistoryIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+// import { Label } from "@/components/ui/label"; // Unused
 import { Progress } from "@/components/ui/progress";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -46,7 +46,7 @@ const PRD_TIPS = [
   }
 ];
 
-const PRDGenerator = () => {
+const PRDGenerator = ({ onViewHistory }) => {
   const [step, setStep] = useState(1);
   const [idea, setIdea] = useState("");
   const [questions, setQuestions] = useState([]);
@@ -55,6 +55,7 @@ const PRDGenerator = () => {
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
   const [timerActive, setTimerActive] = useState(false);
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
@@ -151,6 +152,20 @@ const PRDGenerator = () => {
     }
   };
 
+  const handleSave = async () => {
+    try {
+      await axios.post(`${API}/prds`, {
+        idea,
+        content: prd
+      });
+      setSaved(true);
+      toast.success("PRD saved to history");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to save PRD");
+    }
+  };
+
   const handleCopy = async () => {
     try {
       // Try modern clipboard API first
@@ -185,6 +200,7 @@ const PRDGenerator = () => {
     setAnswers({});
     setPrd("");
     setCopied(false);
+    setSaved(false);
     setTimeLeft(60);
     setTimerActive(false);
     if (timerRef.current) clearInterval(timerRef.current);
@@ -308,10 +324,18 @@ const PRDGenerator = () => {
               <span className={step >= 3 ? "text-[#fafafa]" : ""}>PRD</span>
             </div>
           </div>
+          <Button
+            variant="ghost"
+            onClick={onViewHistory}
+            className="text-[#71717a] hover:text-[#fafafa] hover:bg-[#1f1f23]"
+          >
+            <HistoryIcon className="w-4 h-4 mr-2" />
+            History
+          </Button>
         </div>
-        <Progress 
-          value={step === 1 ? 25 : step === 2 ? 50 : step === 2.5 ? 75 : 100} 
-          className="h-0.5 bg-[#1f1f23]" 
+        <Progress
+          value={step === 1 ? 25 : step === 2 ? 50 : step === 2.5 ? 75 : 100}
+          className="h-0.5 bg-[#1f1f23]"
         />
       </header>
 
@@ -405,7 +429,7 @@ const PRDGenerator = () => {
                   Back to idea
                 </button>
               </div>
-              
+
               <h1 className="text-3xl font-semibold text-[#fafafa] mb-3 tracking-tight">
                 60-Second Challenge
               </h1>
@@ -415,7 +439,7 @@ const PRDGenerator = () => {
               <div className="mt-4 flex items-center gap-2 text-sm text-[#52525b]">
                 <span>{Object.keys(answers).length} of {questions.length} answered</span>
                 <div className="flex-1 h-1 bg-[#1f1f23] rounded-full max-w-[200px]">
-                  <div 
+                  <div
                     className="h-1 bg-[#fafafa] rounded-full transition-all duration-300"
                     style={{ width: `${(Object.keys(answers).length / questions.length) * 100}%` }}
                   />
@@ -428,9 +452,8 @@ const PRDGenerator = () => {
                 <div
                   key={q.id}
                   data-testid={`question-${index}`}
-                  className={`bg-[#111113] border rounded-lg p-6 transition-colors ${
-                    answers[q.id] ? 'border-[#27272a]' : 'border-[#1f1f23]'
-                  }`}
+                  className={`bg-[#111113] border rounded-lg p-6 transition-colors ${answers[q.id] ? 'border-[#27272a]' : 'border-[#1f1f23]'
+                    }`}
                 >
                   <div className="flex items-center gap-2 mb-4">
                     <span className="text-sm">{getCategoryIcon(q.category)}</span>
@@ -453,11 +476,10 @@ const PRDGenerator = () => {
                       <label
                         key={opt.value}
                         htmlFor={`${q.id}-${opt.value}`}
-                        className={`flex items-start space-x-3 p-3 rounded-md cursor-pointer group transition-colors ${
-                          answers[q.id] === opt.value 
-                            ? 'bg-[#1f1f23] border border-[#3f3f46]' 
+                        className={`flex items-start space-x-3 p-3 rounded-md cursor-pointer group transition-colors ${answers[q.id] === opt.value
+                            ? 'bg-[#1f1f23] border border-[#3f3f46]'
                             : 'hover:bg-[#18181b] border border-transparent'
-                        }`}
+                          }`}
                         onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: opt.value }))}
                       >
                         <RadioGroupItem
@@ -467,11 +489,10 @@ const PRDGenerator = () => {
                           className="border-[#3f3f46] text-[#fafafa] mt-0.5 shrink-0"
                         />
                         <span
-                          className={`leading-relaxed text-sm ${
-                            answers[q.id] === opt.value 
-                              ? 'text-[#fafafa]' 
+                          className={`leading-relaxed text-sm ${answers[q.id] === opt.value
+                              ? 'text-[#fafafa]'
                               : 'text-[#a1a1aa] group-hover:text-[#fafafa]'
-                          }`}
+                            }`}
                         >
                           {opt.label}
                         </span>
@@ -483,10 +504,10 @@ const PRDGenerator = () => {
 
               <div className="flex justify-between items-center pt-6 border-t border-[#1f1f23]">
                 <p className="text-sm text-[#52525b]">
-                  {timeLeft === 0 
+                  {timeLeft === 0
                     ? "Time's up! Generate your PRD now."
-                    : Object.keys(answers).length === questions.length 
-                      ? "All done! Generate your PRD." 
+                    : Object.keys(answers).length === questions.length
+                      ? "All done! Generate your PRD."
                       : `${questions.length - Object.keys(answers).length} more to go`}
                 </p>
                 <Button
@@ -550,9 +571,8 @@ const PRDGenerator = () => {
                     {PRD_TIPS.map((_, i) => (
                       <div
                         key={i}
-                        className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                          i === currentTipIndex ? 'bg-[#fafafa]' : 'bg-[#3f3f46]'
-                        }`}
+                        className={`w-1.5 h-1.5 rounded-full transition-colors ${i === currentTipIndex ? 'bg-[#fafafa]' : 'bg-[#3f3f46]'
+                          }`}
                       />
                     ))}
                   </div>
@@ -605,10 +625,27 @@ const PRDGenerator = () => {
                 >
                   New PRD
                 </Button>
+                <Button
+                  onClick={handleSave}
+                  disabled={saved}
+                  className="bg-[#fafafa] text-[#0a0a0b] hover:bg-[#e4e4e7] h-10 px-4 rounded-lg"
+                >
+                  {saved ? (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Saved
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Save to History
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
 
-            <div 
+            <div
               data-testid="prd-output"
               className="bg-[#111113] border border-[#1f1f23] rounded-lg p-8 markdown-content"
             >
