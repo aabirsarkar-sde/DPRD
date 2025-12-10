@@ -20,7 +20,8 @@ load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
+# Fix for SSL handshake issues on some platforms
+client = AsyncIOMotorClient(mongo_url, tlsAllowInvalidCertificates=True)
 db = client[os.environ['DB_NAME']]
 
 # Google Gemini API Configuration
