@@ -569,125 +569,141 @@ async def get_status_checks():
 
 @api_router.post("/analyze", response_model=AnalyzeResponse)
 async def analyze_idea(request: AnalyzeRequest):
-    """Analyze user's idea and generate clarifying questions"""
-    try:
-        if not GOOGLE_API_KEY:
-            raise HTTPException(status_code=500, detail="Google API key not configured")
-        
-        # Call Gemini API directly
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(
-                f"{GEMINI_API_URL}?key={GOOGLE_API_KEY}",
-                headers={"Content-Type": "application/json"},
-                json={
-                    "contents": [
-                        {
-                            "parts": [
-                                {"text": f"{QUESTION_GENERATOR_PROMPT}\n\nAnalyze this app idea and generate clarifying questions:\n\n{request.idea}"}
-                            ]
-                        }
-                    ]
-                }
-            )
-            response.raise_for_status()
-            result = response.json()
-        
-        # Extract text from Gemini response
-        llm_response = result["candidates"][0]["content"]["parts"][0]["text"]
-        logger.info(f"LLM Response received, length: {len(llm_response)}")
-        
-        # Parse the JSON response
-        # Clean response - remove markdown code blocks if present
-        clean_response = llm_response.strip()
-        if clean_response.startswith("```json"):
-            clean_response = clean_response[7:]
-        if clean_response.startswith("```"):
-            clean_response = clean_response[3:]
-        if clean_response.endswith("```"):
-            clean_response = clean_response[:-3]
-        clean_response = clean_response.strip()
-        
-        data = json.loads(clean_response)
-        
-        questions = []
-        for q in data.get("questions", []):
-            questions.append(ClarifyingQuestion(
-                id=q["id"],
-                question=q["question"],
-                options=[QuestionOption(**opt) for opt in q["options"]],
-                category=q["category"]
-            ))
-        
-        return AnalyzeResponse(questions=questions)
-        
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON parse error: {e}, Response: {llm_response}")
-        raise HTTPException(status_code=500, detail="Failed to parse LLM response")
-    except httpx.HTTPStatusError as e:
-        logger.error(f"Gemini API error: {e.response.status_code} - {e.response.text}")
-        raise HTTPException(status_code=502, detail=f"Gemini API error: {e.response.status_code}")
-    except httpx.RequestError as e:
-        logger.error(f"Network error calling Gemini API: {e}")
-        raise HTTPException(status_code=503, detail="Failed to connect to Gemini API")
-    except Exception as e:
-        logger.error(f"Error analyzing idea: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    """Analyze user's idea and generate clarifying questions (MOCK MODE)"""
+    # Mock response - no API call
+    mock_questions = [
+        ClarifyingQuestion(
+            id="q1",
+            question="What authentication method do you prefer?",
+            options=[
+                QuestionOption(id="q1_a", label="Email/Password", description="Traditional login"),
+                QuestionOption(id="q1_b", label="OAuth (Google/GitHub)", description="Social login"),
+                QuestionOption(id="q1_c", label="Magic Link", description="Passwordless email"),
+            ],
+            category="auth"
+        ),
+        ClarifyingQuestion(
+            id="q2",
+            question="What's your target user base size?",
+            options=[
+                QuestionOption(id="q2_a", label="Small (< 100 users)", description="MVP/Testing"),
+                QuestionOption(id="q2_b", label="Medium (100-10K users)", description="Growing startup"),
+                QuestionOption(id="q2_c", label="Large (10K+ users)", description="Scale-ready"),
+            ],
+            category="data_complexity"
+        ),
+        ClarifyingQuestion(
+            id="q3",
+            question="What's your preferred UI style?",
+            options=[
+                QuestionOption(id="q3_a", label="Minimal/Clean", description="Apple-like simplicity"),
+                QuestionOption(id="q3_b", label="Feature-rich Dashboard", description="Power-user focused"),
+                QuestionOption(id="q3_c", label="Playful/Colorful", description="Consumer app vibe"),
+            ],
+            category="ui_style"
+        ),
+        ClarifyingQuestion(
+            id="q4",
+            question="What's your timeline?",
+            options=[
+                QuestionOption(id="q4_a", label="MVP in 1 week", description="Fast prototype"),
+                QuestionOption(id="q4_b", label="Production in 1 month", description="Full features"),
+                QuestionOption(id="q4_c", label="Enterprise in 3 months", description="Complete solution"),
+            ],
+            category="features"
+        ),
+    ]
+    
+    logger.info(f"Mock analyze: Returning {len(mock_questions)} questions for: {request.idea[:50]}...")
+    return AnalyzeResponse(questions=mock_questions)
 
 @api_router.post("/generate-prd", response_model=GeneratePRDResponse)
 async def generate_prd(request: GeneratePRDRequest):
-    """Generate PRD from idea and answers"""
-    try:
-        if not GOOGLE_API_KEY:
-            raise HTTPException(status_code=500, detail="Google API key not configured")
-        
-        # Format the answers for context
-        answers_text = "\n".join([f"- {k}: {v}" for k, v in request.answers.items()])
-        
-        prompt = f"""{PRD_GENERATOR_PROMPT}
+    """Generate PRD from idea and answers (MOCK MODE)"""
+    # Format answers for display
+    answers_text = "\n".join([f"- {k}: {v}" for k, v in request.answers.items()])
+    
+    mock_prd = f"""# Product Requirements Document
 
-Generate a comprehensive PRD for this app idea:
+## 1. Executive Summary
 
-## Original Idea:
-{request.idea}
+**Product Name:** {request.idea.split()[0].title()}App
 
-## User's Answers to Clarifying Questions:
+**Vision:** {request.idea}
+
+## 2. User Requirements
+
+Based on your specifications:
 {answers_text}
 
-Generate the full PRD now."""
-        
-        # Call Gemini API directly
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            response = await client.post(
-                f"{GEMINI_API_URL}?key={GOOGLE_API_KEY}",
-                headers={"Content-Type": "application/json"},
-                json={
-                    "contents": [
-                        {
-                            "parts": [
-                                {"text": prompt}
-                            ]
-                        }
-                    ]
-                }
-            )
-            response.raise_for_status()
-            result = response.json()
-        
-        # Extract text from Gemini response
-        prd_response = result["candidates"][0]["content"]["parts"][0]["text"]
-        logger.info(f"PRD Generated successfully, length: {len(prd_response)}")
-        
-        return GeneratePRDResponse(prd=prd_response)
-        
-    except httpx.HTTPStatusError as e:
-        logger.error(f"Gemini API error: {e.response.status_code} - {e.response.text}")
-        raise HTTPException(status_code=502, detail=f"Gemini API error: {e.response.status_code}")
-    except httpx.RequestError as e:
-        logger.error(f"Network error calling Gemini API: {e}")
-        raise HTTPException(status_code=503, detail="Failed to connect to Gemini API")
-    except Exception as e:
-        logger.error(f"Error generating PRD: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+## 3. Technical Architecture
+
+### 3.1 Frontend
+- React/Next.js with TypeScript
+- Tailwind CSS for styling
+- Zustand for state management
+
+### 3.2 Backend
+- FastAPI (Python)
+- PostgreSQL database
+- Redis for caching
+
+### 3.3 Infrastructure
+- Vercel for frontend hosting
+- Railway/Render for backend
+- AWS S3 for file storage
+
+## 4. Core Features
+
+### 4.1 User Management
+- Sign up / Login
+- Profile management
+- Settings
+
+### 4.2 Main Features
+- Feature 1: Core functionality based on your idea
+- Feature 2: Secondary features
+- Feature 3: Nice-to-have additions
+
+### 4.3 Admin Panel
+- User management
+- Analytics dashboard
+- Content moderation
+
+## 5. UI/UX Specifications
+
+### 5.1 Design System
+- Color palette: Dark theme with accent colors
+- Typography: Inter font family
+- Spacing: 4px grid system
+
+### 5.2 Key Screens
+1. Landing page
+2. Dashboard
+3. Profile
+4. Settings
+
+## 6. Timeline
+
+| Phase | Duration | Deliverables |
+|-------|----------|-------------|
+| Phase 1 | Week 1-2 | MVP Core |
+| Phase 2 | Week 3-4 | Full Features |
+| Phase 3 | Week 5-6 | Polish & Launch |
+
+## 7. Success Metrics
+
+- User signups: 1000 in first month
+- Daily active users: 30% retention
+- User satisfaction: 4.5+ rating
+
+---
+
+*Generated by Deep PRD (Mock Mode)*
+"""
+    
+    logger.info(f"Mock generate-prd: Generated PRD for: {request.idea[:50]}...")
+    return GeneratePRDResponse(prd=mock_prd)
 
 @api_router.post("/prds", response_model=SavedPRD)
 async def save_prd(input: SavedPRDCreate, user: User = Depends(get_current_user)):
