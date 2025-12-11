@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
-import { Trash2, FileText, Calendar, ArrowLeft, ChevronRight, Loader2, Edit2, Check, X, Save, FileMinus, Search, Filter, Tag, ArrowUpDown } from "lucide-react";
+import { Trash2, FileText, Calendar, ArrowLeft, ChevronRight, ChevronLeft, Loader2, Edit2, Check, X, Save, FileMinus, Search, Filter, Tag, ArrowUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,15 +32,17 @@ const History = () => {
     const [selectedTags, setSelectedTags] = useState([]);
     const [availableTags, setAvailableTags] = useState([]);
     const [sortOption, setSortOption] = useState("newest");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchPrds(searchQuery, selectedTags, sortOption);
+            fetchPrds(searchQuery, selectedTags, sortOption, currentPage);
         }, 300);
         return () => clearTimeout(timer);
-    }, [searchQuery, selectedTags, sortOption]);
+    }, [searchQuery, selectedTags, sortOption, currentPage]);
 
-    const fetchPrds = async (query = "", tags = [], sort = "newest") => {
+    const fetchPrds = async (query = "", tags = [], sort = "newest", page = 1) => {
         try {
             const params = { search: query };
             if (tags.length > 0) {
@@ -62,17 +64,23 @@ const History = () => {
                 params.order = "desc";
             }
 
+            params.page = page;
+            params.page_size = 4;
+
             const response = await axios.get(`${API}/prds`, { params });
-            setPrds(response.data);
+            setPrds(response.data.items || []);
+            setTotalPages(response.data.pages || 1);
 
             // Extract unique tags from all loaded PRDs to populate filter
             // (In a real app, you might want a separate endpoint for this)
             const allTags = new Set();
-            response.data.forEach(prd => {
-                if (prd.tags && Array.isArray(prd.tags)) {
-                    prd.tags.forEach(tag => allTags.add(tag));
-                }
-            });
+            if (response.data.items) {
+                response.data.items.forEach(prd => {
+                    if (prd.tags && Array.isArray(prd.tags)) {
+                        prd.tags.forEach(tag => allTags.add(tag));
+                    }
+                });
+            }
             setAvailableTags(Array.from(allTags).sort());
 
         } catch (error) {
@@ -84,6 +92,7 @@ const History = () => {
     };
 
     const toggleTag = (tag) => {
+        setCurrentPage(1);
         setSelectedTags(prev =>
             prev.includes(tag)
                 ? prev.filter(t => t !== tag)
@@ -212,7 +221,7 @@ const History = () => {
                         placeholder="Search ideas..."
                         className="pl-9 bg-[#111113] border-[#27272a] text-[#fafafa] placeholder:text-[#52525b] focus:border-[#fafafa] transition-colors"
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                     />
                 </div>
 
@@ -250,7 +259,7 @@ const History = () => {
                                 <DropdownMenuSeparator className="bg-[#27272a]" />
                                 <DropdownMenuCheckboxItem
                                     checked={false}
-                                    onSelect={() => setSelectedTags([])}
+                                    onSelect={() => { setSelectedTags([]); setCurrentPage(1); }}
                                     className="text-red-400 focus:text-red-400 focus:bg-red-400/10 justify-center"
                                 >
                                     Clear Filters
@@ -272,28 +281,28 @@ const History = () => {
                         <DropdownMenuSeparator className="bg-[#27272a]" />
                         <DropdownMenuCheckboxItem
                             checked={sortOption === "newest"}
-                            onCheckedChange={() => setSortOption("newest")}
+                            onCheckedChange={() => { setSortOption("newest"); setCurrentPage(1); }}
                             className="text-[#a1a1aa] focus:text-[#fafafa] focus:bg-[#27272a]"
                         >
                             Newest First
                         </DropdownMenuCheckboxItem>
                         <DropdownMenuCheckboxItem
                             checked={sortOption === "oldest"}
-                            onCheckedChange={() => setSortOption("oldest")}
+                            onCheckedChange={() => { setSortOption("oldest"); setCurrentPage(1); }}
                             className="text-[#a1a1aa] focus:text-[#fafafa] focus:bg-[#27272a]"
                         >
                             Oldest First
                         </DropdownMenuCheckboxItem>
                         <DropdownMenuCheckboxItem
                             checked={sortOption === "alphabetical"}
-                            onCheckedChange={() => setSortOption("alphabetical")}
+                            onCheckedChange={() => { setSortOption("alphabetical"); setCurrentPage(1); }}
                             className="text-[#a1a1aa] focus:text-[#fafafa] focus:bg-[#27272a]"
                         >
                             A-Z
                         </DropdownMenuCheckboxItem>
                         <DropdownMenuCheckboxItem
                             checked={sortOption === "reverse-alphabetical"}
-                            onCheckedChange={() => setSortOption("reverse-alphabetical")}
+                            onCheckedChange={() => { setSortOption("reverse-alphabetical"); setCurrentPage(1); }}
                             className="text-[#a1a1aa] focus:text-[#fafafa] focus:bg-[#27272a]"
                         >
                             Z-A
@@ -427,10 +436,37 @@ const History = () => {
                                     )}
                                 </div>
                             </div>
-                        ))}    </div>
-                )
-            }
-        </div >
+                        ))}
+                    </div>
+                )}
+
+            {/* Pagination Controls */}
+            {prds.length > 0 && (
+                <div className="flex items-center justify-between mt-8 pt-4 border-t border-[#1f1f23]">
+                    <Button
+                        variant="outline"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        className="border-[#27272a] bg-transparent hover:bg-[#1f1f23] text-[#a1a1aa] hover:text-[#fafafa]"
+                    >
+                        <ChevronLeft className="w-4 h-4 mr-2" />
+                        Previous
+                    </Button>
+                    <span className="text-sm text-[#71717a]">
+                        Page <span className="text-[#fafafa] font-medium">{currentPage}</span> of <span className="text-[#fafafa] font-medium">{totalPages}</span>
+                    </span>
+                    <Button
+                        variant="outline"
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                        className="border-[#27272a] bg-transparent hover:bg-[#1f1f23] text-[#a1a1aa] hover:text-[#fafafa]"
+                    >
+                        Next
+                        <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                </div>
+            )}
+        </div>
     );
 };
 

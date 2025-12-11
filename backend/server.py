@@ -11,6 +11,7 @@ import uuid
 from datetime import datetime, timezone, timedelta
 import httpx
 import json
+from math import ceil
 import jwt
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -111,6 +112,13 @@ class SavedPRD(BaseModel):
     content: str
     tags: List[str] = []
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class PaginatedPRDResponse(BaseModel):
+    items: List[SavedPRD]
+    total: int
+    page: int
+    size: int
+    pages: int
 
 class SavedPRDCreate(BaseModel):
     idea: str
@@ -742,13 +750,15 @@ async def save_prd(input: SavedPRDCreate, user: User = Depends(get_current_user)
     _ = await db.saved_prds.insert_one(doc)
     return prd_obj
 
-@api_router.get("/prds", response_model=List[SavedPRD])
+@api_router.get("/prds", response_model=PaginatedPRDResponse)
 async def get_saved_prds(
     user: User = Depends(get_current_user),
     search: Optional[str] = None,
     tags: Optional[str] = None,  # Comma-separated tags
     sort_by: Optional[str] = "created_at",
-    order: Optional[str] = "desc"
+    order: Optional[str] = "desc",
+    page: int = 1,
+    page_size: int = 4
 ):
     # Build query
     query = {"user_id": user.id}
@@ -773,12 +783,26 @@ async def get_saved_prds(
     valid_sort_fields = ["created_at", "idea"]
     if sort_by not in valid_sort_fields:
         sort_by = "created_at"
-            
-    saved_prds = await db.saved_prds.find(query, {"_id": 0}).sort(sort_by, sort_direction).to_list(1000)
+    
+    # Calculate pagination
+    total_count = await db.saved_prds.count_documents(query)
+    total_pages = ceil(total_count / page_size)
+    skip = (page - 1) * page_size
+    
+    cursor = db.saved_prds.find(query, {"_id": 0}).sort(sort_by, sort_direction).skip(skip).limit(page_size)
+    saved_prds = await cursor.to_list(length=page_size)
+    
     for prd in saved_prds:
         if isinstance(prd['created_at'], str):
             prd['created_at'] = datetime.fromisoformat(prd['created_at'])
-    return saved_prds
+            
+    return PaginatedPRDResponse(
+        items=saved_prds,
+        total=total_count,
+        page=page,
+        size=page_size,
+        pages=total_pages
+    )
 
 @api_router.get("/prds/{prd_id}", response_model=SavedPRD)
 async def get_saved_prd(prd_id: str, user: User = Depends(get_current_user)):
