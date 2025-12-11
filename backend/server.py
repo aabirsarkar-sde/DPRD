@@ -570,52 +570,59 @@ async def get_status_checks():
 @api_router.post("/analyze", response_model=AnalyzeResponse)
 async def analyze_idea(request: AnalyzeRequest):
     """Analyze user's idea and generate clarifying questions (MOCK MODE)"""
-    # Mock response - no API call
-    mock_questions = [
-        ClarifyingQuestion(
-            id="q1",
-            question="What authentication method do you prefer?",
-            options=[
-                QuestionOption(id="q1_a", label="Email/Password", description="Traditional login"),
-                QuestionOption(id="q1_b", label="OAuth (Google/GitHub)", description="Social login"),
-                QuestionOption(id="q1_c", label="Magic Link", description="Passwordless email"),
-            ],
-            category="auth"
-        ),
-        ClarifyingQuestion(
-            id="q2",
-            question="What's your target user base size?",
-            options=[
-                QuestionOption(id="q2_a", label="Small (< 100 users)", description="MVP/Testing"),
-                QuestionOption(id="q2_b", label="Medium (100-10K users)", description="Growing startup"),
-                QuestionOption(id="q2_c", label="Large (10K+ users)", description="Scale-ready"),
-            ],
-            category="data_complexity"
-        ),
-        ClarifyingQuestion(
-            id="q3",
-            question="What's your preferred UI style?",
-            options=[
-                QuestionOption(id="q3_a", label="Minimal/Clean", description="Apple-like simplicity"),
-                QuestionOption(id="q3_b", label="Feature-rich Dashboard", description="Power-user focused"),
-                QuestionOption(id="q3_c", label="Playful/Colorful", description="Consumer app vibe"),
-            ],
-            category="ui_style"
-        ),
-        ClarifyingQuestion(
-            id="q4",
-            question="What's your timeline?",
-            options=[
-                QuestionOption(id="q4_a", label="MVP in 1 week", description="Fast prototype"),
-                QuestionOption(id="q4_b", label="Production in 1 month", description="Full features"),
-                QuestionOption(id="q4_c", label="Enterprise in 3 months", description="Complete solution"),
-            ],
-            category="features"
-        ),
-    ]
-    
-    logger.info(f"Mock analyze: Returning {len(mock_questions)} questions for: {request.idea[:50]}...")
-    return AnalyzeResponse(questions=mock_questions)
+    try:
+        # Mock response - no API call
+        mock_questions = [
+            ClarifyingQuestion(
+                id="q1",
+                question="What authentication method do you prefer?",
+                options=[
+                    QuestionOption(id="q1_a", label="Email/Password", description="Traditional login"),
+                    QuestionOption(id="q1_b", label="OAuth (Google/GitHub)", description="Social login"),
+                    QuestionOption(id="q1_c", label="Magic Link", description="Passwordless email"),
+                ],
+                category="auth"
+            ),
+            ClarifyingQuestion(
+                id="q2",
+                question="What's your target user base size?",
+                options=[
+                    QuestionOption(id="q2_a", label="Small (under 100 users)", description="MVP/Testing"),
+                    QuestionOption(id="q2_b", label="Medium (100-10K users)", description="Growing startup"),
+                    QuestionOption(id="q2_c", label="Large (10K+ users)", description="Scale-ready"),
+                ],
+                category="data_complexity"
+            ),
+            ClarifyingQuestion(
+                id="q3",
+                question="What's your preferred UI style?",
+                options=[
+                    QuestionOption(id="q3_a", label="Minimal/Clean", description="Apple-like simplicity"),
+                    QuestionOption(id="q3_b", label="Feature-rich Dashboard", description="Power-user focused"),
+                    QuestionOption(id="q3_c", label="Playful/Colorful", description="Consumer app vibe"),
+                ],
+                category="ui_style"
+            ),
+            ClarifyingQuestion(
+                id="q4",
+                question="What's your timeline?",
+                options=[
+                    QuestionOption(id="q4_a", label="MVP in 1 week", description="Fast prototype"),
+                    QuestionOption(id="q4_b", label="Production in 1 month", description="Full features"),
+                    QuestionOption(id="q4_c", label="Enterprise in 3 months", description="Complete solution"),
+                ],
+                category="features"
+            ),
+        ]
+        
+        idea_preview = request.idea[:50] if request.idea else "empty"
+        logger.info(f"Mock analyze: Returning {len(mock_questions)} questions for: {idea_preview}...")
+        return AnalyzeResponse(questions=mock_questions)
+    except Exception as e:
+        logger.error(f"Mock analyze error: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/generate-prd", response_model=GeneratePRDResponse)
 async def generate_prd(request: GeneratePRDRequest):
