@@ -27,7 +27,7 @@ db = client[os.environ['DB_NAME']]
 
 # Google Gemini API Configuration
 GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
 # Auth Configuration
 SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-please-change-in-prod')
