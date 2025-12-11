@@ -144,6 +144,7 @@ const PRDGenerator = ({ onViewHistory }) => {
       setPrd(response.data.prd);
       setGeneratedTags(response.data.tags || []);
       setSaved(false);
+      setStep(3);
       toast.success("PRD generated successfully");
     } catch (error) {
       console.error(error);
