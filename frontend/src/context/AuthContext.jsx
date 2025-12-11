@@ -13,17 +13,26 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (token) {
-            // Set default header for future requests
-            axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-            // In a real app, you might validate the token with a /me endpoint here
-            // For now, we'll assume if token exists, user is logged in (simplified)
-            setUser({ email: "user@example.com" }); // Placeholder until we have a /me endpoint or decode token
-        } else {
-            delete axios.defaults.headers.common["Authorization"];
-            setUser(null);
-        }
-        setLoading(false);
+        const fetchUser = async () => {
+            if (token) {
+                axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+                try {
+                    const response = await axios.get(`${API}/auth/me`);
+                    setUser(response.data);
+                } catch (error) {
+                    console.error("Failed to fetch user:", error);
+                    // Token might be expired, clear it
+                    localStorage.removeItem("token");
+                    setToken(null);
+                    setUser(null);
+                }
+            } else {
+                delete axios.defaults.headers.common["Authorization"];
+                setUser(null);
+            }
+            setLoading(false);
+        };
+        fetchUser();
     }, [token]);
 
     const login = async (email, password) => {

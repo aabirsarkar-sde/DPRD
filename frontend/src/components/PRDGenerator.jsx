@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { FileText, ChevronRight, Copy, Check, Loader2, ArrowLeft, Clock, Lightbulb, Save, History as HistoryIcon } from "lucide-react";
+import { FileText, ChevronRight, Copy, Check, Loader2, ArrowLeft, Clock, Lightbulb, Save, History as HistoryIcon, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -153,7 +153,7 @@ const PRDGenerator = ({ onViewHistory }) => {
     }
   };
 
-  const { token } = useAuth();
+  const { token, user, logout } = useAuth();
 
   const handleSave = async () => {
     try {
@@ -339,6 +339,21 @@ const PRDGenerator = ({ onViewHistory }) => {
             <HistoryIcon className="w-4 h-4 mr-2" />
             History
           </Button>
+          <div className="flex items-center gap-3 ml-4 pl-4 border-l border-[#27272a]">
+            <div className="flex items-center gap-2 text-sm text-[#a1a1aa]">
+              <User className="w-4 h-4" />
+              <span className="max-w-[150px] truncate">{user?.email}</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={logout}
+              className="text-[#71717a] hover:text-red-400 hover:bg-red-400/10"
+              title="Logout"
+            >
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
         <Progress
           value={step === 1 ? 25 : step === 2 ? 50 : step === 2.5 ? 75 : 100}

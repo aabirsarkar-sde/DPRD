@@ -522,6 +522,10 @@ async def signup(user: UserCreate):
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.get("/auth/me")
+async def get_me(user: User = Depends(get_current_user)):
+    return {"id": user.id, "email": user.email, "created_at": user.created_at.isoformat()}
+
 @api_router.post("/auth/login", response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     try:
