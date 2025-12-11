@@ -66,7 +66,7 @@ const History = ({ onBack, onSelectPrd }) => {
             return;
         }
         try {
-            const response = await axios.put(`${API}/prds/${id}`, { idea: editIdea });
+            const response = await axios.patch(`${API}/prds/${id}/idea`, { idea: editIdea });
             setPrds(prds.map(p => p.id === id ? { ...p, idea: response.data.idea } : p));
             toast.success("PRD idea updated");
             cancelEditing();
@@ -94,7 +94,7 @@ const History = ({ onBack, onSelectPrd }) => {
             return;
         }
         try {
-            const response = await axios.put(`${API}/prds/${id}`, { content: editContent });
+            const response = await axios.put(`${API}/prds/${id}/content`, { content: editContent });
             setPrds(prds.map(p => p.id === id ? { ...p, content: response.data.content } : p));
             toast.success("PRD content updated");
             cancelContentEditing();

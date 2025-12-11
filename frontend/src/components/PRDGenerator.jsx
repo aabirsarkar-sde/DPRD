@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 // import { Label } from "@/components/ui/label"; // Unused
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/context/AuthContext";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -152,11 +153,17 @@ const PRDGenerator = ({ onViewHistory }) => {
     }
   };
 
+  const { token } = useAuth();
+
   const handleSave = async () => {
     try {
       await axios.post(`${API}/prds`, {
         idea,
         content: prd
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
       setSaved(true);
       toast.success("PRD saved to history");
@@ -477,8 +484,8 @@ const PRDGenerator = ({ onViewHistory }) => {
                         key={opt.value}
                         htmlFor={`${q.id}-${opt.value}`}
                         className={`flex items-start space-x-3 p-3 rounded-md cursor-pointer group transition-colors ${answers[q.id] === opt.value
-                            ? 'bg-[#1f1f23] border border-[#3f3f46]'
-                            : 'hover:bg-[#18181b] border border-transparent'
+                          ? 'bg-[#1f1f23] border border-[#3f3f46]'
+                          : 'hover:bg-[#18181b] border border-transparent'
                           }`}
                         onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: opt.value }))}
                       >
@@ -490,8 +497,8 @@ const PRDGenerator = ({ onViewHistory }) => {
                         />
                         <span
                           className={`leading-relaxed text-sm ${answers[q.id] === opt.value
-                              ? 'text-[#fafafa]'
-                              : 'text-[#a1a1aa] group-hover:text-[#fafafa]'
+                            ? 'text-[#fafafa]'
+                            : 'text-[#a1a1aa] group-hover:text-[#fafafa]'
                             }`}
                         >
                           {opt.label}
