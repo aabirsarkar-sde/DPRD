@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { Trash2, FileText, Calendar, ArrowLeft, ChevronRight, Loader2, Edit2, Check, X, Save, FileMinus } from "lucide-react";
+import { Trash2, FileText, Calendar, ArrowLeft, ChevronRight, Loader2, Edit2, Check, X, Save, FileMinus, Search } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,14 +17,20 @@ const History = ({ onBack, onSelectPrd }) => {
     const [editIdea, setEditIdea] = useState("");
     const [editingContentId, setEditingContentId] = useState(null);
     const [editContent, setEditContent] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
-        fetchPrds();
-    }, []);
+        const timer = setTimeout(() => {
+            fetchPrds(searchQuery);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
-    const fetchPrds = async () => {
+    const fetchPrds = async (query = "") => {
         try {
-            const response = await axios.get(`${API}/prds`);
+            const response = await axios.get(`${API}/prds`, {
+                params: { search: query }
+            });
             setPrds(response.data);
         } catch (error) {
             console.error(error);
@@ -146,6 +152,16 @@ const History = ({ onBack, onSelectPrd }) => {
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Generator
                 </Button>
+            </div>
+
+            <div className="relative mb-6">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#71717a] w-4 h-4" />
+                <Input
+                    placeholder="Search ideas..."
+                    className="pl-9 bg-[#111113] border-[#27272a] text-[#fafafa] placeholder:text-[#52525b] focus:border-[#fafafa] transition-colors"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
             </div>
 
             {prds.length === 0 ? (

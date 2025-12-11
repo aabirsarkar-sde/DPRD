@@ -722,8 +722,21 @@ async def save_prd(input: SavedPRDCreate, user: User = Depends(get_current_user)
     return prd_obj
 
 @api_router.get("/prds", response_model=List[SavedPRD])
-async def get_saved_prds(user: User = Depends(get_current_user)):
-    saved_prds = await db.saved_prds.find({"user_id": user.id}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+async def get_saved_prds(
+    user: User = Depends(get_current_user),
+    search: Optional[str] = None
+):
+    # Build query
+    query = {"user_id": user.id}
+    
+    # Search filter (search in idea and content)
+    if search:
+        query["$or"] = [
+            {"idea": {"$regex": search, "$options": "i"}},
+            {"content": {"$regex": search, "$options": "i"}}
+        ]
+        
+    saved_prds = await db.saved_prds.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
     for prd in saved_prds:
         if isinstance(prd['created_at'], str):
             prd['created_at'] = datetime.fromisoformat(prd['created_at'])
