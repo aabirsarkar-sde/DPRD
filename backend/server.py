@@ -577,9 +577,9 @@ async def analyze_idea(request: AnalyzeRequest):
                 id="q1",
                 question="What authentication method do you prefer?",
                 options=[
-                    QuestionOption(id="q1_a", label="Email/Password", description="Traditional login"),
-                    QuestionOption(id="q1_b", label="OAuth (Google/GitHub)", description="Social login"),
-                    QuestionOption(id="q1_c", label="Magic Link", description="Passwordless email"),
+                    QuestionOption(label="Email/Password", value="email_password"),
+                    QuestionOption(label="OAuth (Google/GitHub)", value="oauth"),
+                    QuestionOption(label="Magic Link", value="magic_link"),
                 ],
                 category="auth"
             ),
@@ -587,9 +587,9 @@ async def analyze_idea(request: AnalyzeRequest):
                 id="q2",
                 question="What's your target user base size?",
                 options=[
-                    QuestionOption(id="q2_a", label="Small (under 100 users)", description="MVP/Testing"),
-                    QuestionOption(id="q2_b", label="Medium (100-10K users)", description="Growing startup"),
-                    QuestionOption(id="q2_c", label="Large (10K+ users)", description="Scale-ready"),
+                    QuestionOption(label="Small (under 100 users)", value="small"),
+                    QuestionOption(label="Medium (100-10K users)", value="medium"),
+                    QuestionOption(label="Large (10K+ users)", value="large"),
                 ],
                 category="data_complexity"
             ),
@@ -597,9 +597,9 @@ async def analyze_idea(request: AnalyzeRequest):
                 id="q3",
                 question="What's your preferred UI style?",
                 options=[
-                    QuestionOption(id="q3_a", label="Minimal/Clean", description="Apple-like simplicity"),
-                    QuestionOption(id="q3_b", label="Feature-rich Dashboard", description="Power-user focused"),
-                    QuestionOption(id="q3_c", label="Playful/Colorful", description="Consumer app vibe"),
+                    QuestionOption(label="Minimal/Clean", value="minimal"),
+                    QuestionOption(label="Feature-rich Dashboard", value="dashboard"),
+                    QuestionOption(label="Playful/Colorful", value="playful"),
                 ],
                 category="ui_style"
             ),
@@ -607,9 +607,9 @@ async def analyze_idea(request: AnalyzeRequest):
                 id="q4",
                 question="What's your timeline?",
                 options=[
-                    QuestionOption(id="q4_a", label="MVP in 1 week", description="Fast prototype"),
-                    QuestionOption(id="q4_b", label="Production in 1 month", description="Full features"),
-                    QuestionOption(id="q4_c", label="Enterprise in 3 months", description="Complete solution"),
+                    QuestionOption(label="MVP in 1 week", value="1_week"),
+                    QuestionOption(label="Production in 1 month", value="1_month"),
+                    QuestionOption(label="Enterprise in 3 months", value="3_months"),
                 ],
                 category="features"
             ),
