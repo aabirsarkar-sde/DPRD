@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
-import { Trash2, FileText, Calendar, ArrowLeft, ChevronRight, Loader2, Edit2, Check, X, Save, FileMinus, Search, Filter, Tag } from "lucide-react";
+import { Trash2, FileText, Calendar, ArrowLeft, ChevronRight, Loader2, Edit2, Check, X, Save, FileMinus, Search, Filter, Tag, ArrowUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,20 +31,37 @@ const History = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedTags, setSelectedTags] = useState([]);
     const [availableTags, setAvailableTags] = useState([]);
+    const [sortOption, setSortOption] = useState("newest");
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchPrds(searchQuery, selectedTags);
+            fetchPrds(searchQuery, selectedTags, sortOption);
         }, 300);
         return () => clearTimeout(timer);
-    }, [searchQuery, selectedTags]);
+    }, [searchQuery, selectedTags, sortOption]);
 
-    const fetchPrds = async (query = "", tags = []) => {
+    const fetchPrds = async (query = "", tags = [], sort = "newest") => {
         try {
             const params = { search: query };
             if (tags.length > 0) {
                 params.tags = tags.join(",");
             }
+
+            // Add sorting params
+            if (sort === "newest") {
+                params.sort_by = "created_at";
+                params.order = "desc";
+            } else if (sort === "oldest") {
+                params.sort_by = "created_at";
+                params.order = "asc";
+            } else if (sort === "alphabetical") {
+                params.sort_by = "idea";
+                params.order = "asc";
+            } else if (sort === "reverse-alphabetical") {
+                params.sort_by = "idea";
+                params.order = "desc";
+            }
+
             const response = await axios.get(`${API}/prds`, { params });
             setPrds(response.data);
 
@@ -242,135 +259,178 @@ const History = () => {
                         )}
                     </DropdownMenuContent>
                 </DropdownMenu>
+
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="border-[#27272a] bg-[#111113] text-[#a1a1aa] hover:text-[#fafafa] hover:bg-[#1f1f23]">
+                            <ArrowUpDown className="w-4 h-4 mr-2" />
+                            Sort
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56 bg-[#18181b] border-[#27272a]">
+                        <DropdownMenuLabel className="text-[#fafafa]">Sort by</DropdownMenuLabel>
+                        <DropdownMenuSeparator className="bg-[#27272a]" />
+                        <DropdownMenuCheckboxItem
+                            checked={sortOption === "newest"}
+                            onCheckedChange={() => setSortOption("newest")}
+                            className="text-[#a1a1aa] focus:text-[#fafafa] focus:bg-[#27272a]"
+                        >
+                            Newest First
+                        </DropdownMenuCheckboxItem>
+                        <DropdownMenuCheckboxItem
+                            checked={sortOption === "oldest"}
+                            onCheckedChange={() => setSortOption("oldest")}
+                            className="text-[#a1a1aa] focus:text-[#fafafa] focus:bg-[#27272a]"
+                        >
+                            Oldest First
+                        </DropdownMenuCheckboxItem>
+                        <DropdownMenuCheckboxItem
+                            checked={sortOption === "alphabetical"}
+                            onCheckedChange={() => setSortOption("alphabetical")}
+                            className="text-[#a1a1aa] focus:text-[#fafafa] focus:bg-[#27272a]"
+                        >
+                            A-Z
+                        </DropdownMenuCheckboxItem>
+                        <DropdownMenuCheckboxItem
+                            checked={sortOption === "reverse-alphabetical"}
+                            onCheckedChange={() => setSortOption("reverse-alphabetical")}
+                            className="text-[#a1a1aa] focus:text-[#fafafa] focus:bg-[#27272a]"
+                        >
+                            Z-A
+                        </DropdownMenuCheckboxItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
 
-            {prds.length === 0 ? (
-                <div className="text-center py-20 bg-[#111113] border border-[#1f1f23] rounded-lg">
-                    <FileText className="w-12 h-12 text-[#3f3f46] mx-auto mb-4" />
-                    <h3 className="text-[#fafafa] font-medium mb-2">No saved PRDs yet</h3>
-                    <p className="text-[#71717a] mb-6">Generate your first PRD to see it here.</p>
-                    <Button
-                        onClick={() => navigate("/")}
-                        className="bg-[#fafafa] text-[#0a0a0b] hover:bg-[#e4e4e7]"
-                    >
-                        Create New PRD
-                    </Button>
-                </div>
-            ) : (
-                <div className="grid gap-4">
-                    {prds.map((prd) => (
-                        <div
-                            key={prd.id}
-                            onClick={() => navigate(`/prd/${prd.id}`)}
-                            className="group bg-[#111113] border border-[#1f1f23] hover:border-[#3f3f46] p-6 rounded-lg cursor-pointer transition-all hover:bg-[#18181b]/50"
+            {
+                prds.length === 0 ? (
+                    <div className="text-center py-20 bg-[#111113] border border-[#1f1f23] rounded-lg">
+                        <FileText className="w-12 h-12 text-[#3f3f46] mx-auto mb-4" />
+                        <h3 className="text-[#fafafa] font-medium mb-2">No saved PRDs yet</h3>
+                        <p className="text-[#71717a] mb-6">Generate your first PRD to see it here.</p>
+                        <Button
+                            onClick={() => navigate("/")}
+                            className="bg-[#fafafa] text-[#0a0a0b] hover:bg-[#e4e4e7]"
                         >
-                            <div className="flex flex-col gap-4">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1 min-w-0 mr-4">
-                                        {editingId === prd.id ? (
-                                            <div className="flex items-center gap-2 mb-2" onClick={(e) => e.stopPropagation()}>
-                                                <Input
-                                                    value={editIdea}
-                                                    onChange={(e) => setEditIdea(e.target.value)}
-                                                    className="bg-[#1f1f23] border-[#3f3f46] text-[#fafafa] h-8"
-                                                />
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-emerald-500 hover:bg-emerald-500/10" onClick={(e) => saveEditing(e, prd.id)}>
-                                                    <Check className="w-4 h-4" />
-                                                </Button>
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:bg-red-500/10" onClick={(e) => { e.stopPropagation(); cancelEditing(); }}>
-                                                    <X className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        ) : (
-                                            <div className="flex flex-col gap-2 mb-2 group/title">
-                                                <div className="flex items-center gap-2">
-                                                    <h3 className="text-[#fafafa] font-medium text-lg truncate group-hover:text-white transition-colors">
-                                                        {prd.idea}
-                                                    </h3>
-                                                    <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        className="h-6 w-6 text-[#52525b] hover:text-[#a1a1aa] opacity-0 group-hover/title:opacity-100"
-                                                        onClick={(e) => startEditing(e, prd)}
-                                                    >
-                                                        <Edit2 className="w-3 h-3" />
+                            Create New PRD
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="grid gap-4">
+                        {prds.map((prd) => (
+                            <div
+                                key={prd.id}
+                                onClick={() => navigate(`/prd/${prd.id}`)}
+                                className="group bg-[#111113] border border-[#1f1f23] hover:border-[#3f3f46] p-6 rounded-lg cursor-pointer transition-all hover:bg-[#18181b]/50"
+                            >
+                                <div className="flex flex-col gap-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1 min-w-0 mr-4">
+                                            {editingId === prd.id ? (
+                                                <div className="flex items-center gap-2 mb-2" onClick={(e) => e.stopPropagation()}>
+                                                    <Input
+                                                        value={editIdea}
+                                                        onChange={(e) => setEditIdea(e.target.value)}
+                                                        className="bg-[#1f1f23] border-[#3f3f46] text-[#fafafa] h-8"
+                                                    />
+                                                    <Button size="icon" variant="ghost" className="h-8 w-8 text-emerald-500 hover:bg-emerald-500/10" onClick={(e) => saveEditing(e, prd.id)}>
+                                                        <Check className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:bg-red-500/10" onClick={(e) => { e.stopPropagation(); cancelEditing(); }}>
+                                                        <X className="w-4 h-4" />
                                                     </Button>
                                                 </div>
-                                                {prd.tags && prd.tags.length > 0 && (
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {prd.tags.map(tag => (
-                                                            <Badge key={tag} variant="secondary" className="bg-[#27272a] text-[#a1a1aa] hover:bg-[#3f3f46] border-none text-[10px] h-5 px-1.5">
-                                                                {tag}
-                                                            </Badge>
-                                                        ))}
+                                            ) : (
+                                                <div className="flex flex-col gap-2 mb-2 group/title">
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="text-[#fafafa] font-medium text-lg truncate group-hover:text-white transition-colors">
+                                                            {prd.idea}
+                                                        </h3>
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="h-6 w-6 text-[#52525b] hover:text-[#a1a1aa] opacity-0 group-hover/title:opacity-100"
+                                                            onClick={(e) => startEditing(e, prd)}
+                                                        >
+                                                            <Edit2 className="w-3 h-3" />
+                                                        </Button>
                                                     </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="flex items-center gap-4 text-sm text-[#52525b]">
-                                        <div className="flex items-center gap-1.5">
-                                            <Calendar className="w-3.5 h-3.5" />
-                                            {format(new Date(prd.created_at), "MMM d, yyyy • h:mm a")}
+                                                    {prd.tags && prd.tags.length > 0 && (
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {prd.tags.map(tag => (
+                                                                <Badge key={tag} variant="secondary" className="bg-[#27272a] text-[#a1a1aa] hover:bg-[#3f3f46] border-none text-[10px] h-5 px-1.5">
+                                                                    {tag}
+                                                                </Badge>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
-                                </div>
 
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => startEditingContent(e, prd)}
-                                        className="text-[#52525b] hover:text-[#fafafa] hover:bg-[#1f1f23] opacity-0 group-hover:opacity-100"
-                                    >
-                                        <FileText className="w-4 h-4 mr-2" />
-                                        Edit Content
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={(e) => handleDelete(e, prd.id)}
-                                        className="text-[#52525b] hover:text-red-400 hover:bg-red-400/10 opacity-0 group-hover:opacity-100 transition-all"
-                                        title="Delete PRD"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                </div>
-
-                                {editingContentId === prd.id && (
-                                    <div className="mt-4 pt-4 border-t border-[#1f1f23]" onClick={(e) => e.stopPropagation()}>
-                                        <Textarea
-                                            value={editContent}
-                                            onChange={(e) => setEditContent(e.target.value)}
-                                            className="min-h-[200px] mb-4 bg-[#1f1f23] border-[#3f3f46] text-[#fafafa] font-mono text-sm"
-                                        />
-                                        <div className="flex justify-between">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => clearContent(prd.id)}
-                                                className="text-red-400 border-red-400/20 hover:bg-red-400/10 hover:text-red-300"
-                                            >
-                                                <FileMinus className="w-4 h-4 mr-2" />
-                                                Clear Content
-                                            </Button>
-                                            <div className="flex gap-2">
-                                                <Button size="sm" variant="ghost" onClick={cancelContentEditing} className="text-[#a1a1aa] hover:text-[#fafafa]">
-                                                    Cancel
-                                                </Button>
-                                                <Button size="sm" onClick={(e) => saveContentEditing(e, prd.id)} className="bg-[#fafafa] text-[#0a0a0b] hover:bg-[#e4e4e7]">
-                                                    Save Changes
-                                                </Button>
+                                        <div className="flex items-center gap-4 text-sm text-[#52525b]">
+                                            <div className="flex items-center gap-1.5">
+                                                <Calendar className="w-3.5 h-3.5" />
+                                                {format(new Date(prd.created_at), "MMM d, yyyy • h:mm a")}
                                             </div>
                                         </div>
                                     </div>
-                                )}
+
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={(e) => startEditingContent(e, prd)}
+                                            className="text-[#52525b] hover:text-[#fafafa] hover:bg-[#1f1f23] opacity-0 group-hover:opacity-100"
+                                        >
+                                            <FileText className="w-4 h-4 mr-2" />
+                                            Edit Content
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={(e) => handleDelete(e, prd.id)}
+                                            className="text-[#52525b] hover:text-red-400 hover:bg-red-400/10 opacity-0 group-hover:opacity-100 transition-all"
+                                            title="Delete PRD"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+
+                                    {editingContentId === prd.id && (
+                                        <div className="mt-4 pt-4 border-t border-[#1f1f23]" onClick={(e) => e.stopPropagation()}>
+                                            <Textarea
+                                                value={editContent}
+                                                onChange={(e) => setEditContent(e.target.value)}
+                                                className="min-h-[200px] mb-4 bg-[#1f1f23] border-[#3f3f46] text-[#fafafa] font-mono text-sm"
+                                            />
+                                            <div className="flex justify-between">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => clearContent(prd.id)}
+                                                    className="text-red-400 border-red-400/20 hover:bg-red-400/10 hover:text-red-300"
+                                                >
+                                                    <FileMinus className="w-4 h-4 mr-2" />
+                                                    Clear Content
+                                                </Button>
+                                                <div className="flex gap-2">
+                                                    <Button size="sm" variant="ghost" onClick={cancelContentEditing} className="text-[#a1a1aa] hover:text-[#fafafa]">
+                                                        Cancel
+                                                    </Button>
+                                                    <Button size="sm" onClick={(e) => saveContentEditing(e, prd.id)} className="bg-[#fafafa] text-[#0a0a0b] hover:bg-[#e4e4e7]">
+                                                        Save Changes
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    ))}    </div>
-            )}
-        </div>
+                        ))}    </div>
+                )
+            }
+        </div >
     );
 };
 

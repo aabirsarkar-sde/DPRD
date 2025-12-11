@@ -746,7 +746,9 @@ async def save_prd(input: SavedPRDCreate, user: User = Depends(get_current_user)
 async def get_saved_prds(
     user: User = Depends(get_current_user),
     search: Optional[str] = None,
-    tags: Optional[str] = None  # Comma-separated tags
+    tags: Optional[str] = None,  # Comma-separated tags
+    sort_by: Optional[str] = "created_at",
+    order: Optional[str] = "desc"
 ):
     # Build query
     query = {"user_id": user.id}
@@ -764,7 +766,15 @@ async def get_saved_prds(
         if tag_list:
             query["tags"] = {"$in": tag_list}
             
-    saved_prds = await db.saved_prds.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    # Determine sort direction
+    sort_direction = -1 if order == "desc" else 1
+    
+    # Validate sort field
+    valid_sort_fields = ["created_at", "idea"]
+    if sort_by not in valid_sort_fields:
+        sort_by = "created_at"
+            
+    saved_prds = await db.saved_prds.find(query, {"_id": 0}).sort(sort_by, sort_direction).to_list(1000)
     for prd in saved_prds:
         if isinstance(prd['created_at'], str):
             prd['created_at'] = datetime.fromisoformat(prd['created_at'])
