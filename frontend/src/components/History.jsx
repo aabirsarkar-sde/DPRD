@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import { Trash2, FileText, Calendar, ArrowLeft, ChevronRight, Loader2, Edit2, Check, X, Save, FileMinus, Search, Filter, Tag } from "lucide-react";
@@ -19,7 +20,8 @@ import {
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const History = ({ onBack, onSelectPrd }) => {
+const History = () => {
+    const navigate = useNavigate();
     const [prds, setPrds] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState(null);
@@ -178,7 +180,7 @@ const History = ({ onBack, onSelectPrd }) => {
                 </div>
                 <Button
                     variant="outline"
-                    onClick={onBack}
+                    onClick={() => navigate("/")}
                     className="border-[#27272a] bg-transparent hover:bg-[#18181b] text-[#a1a1aa] hover:text-[#fafafa]"
                 >
                     <ArrowLeft className="w-4 h-4 mr-2" />
@@ -248,7 +250,7 @@ const History = ({ onBack, onSelectPrd }) => {
                     <h3 className="text-[#fafafa] font-medium mb-2">No saved PRDs yet</h3>
                     <p className="text-[#71717a] mb-6">Generate your first PRD to see it here.</p>
                     <Button
-                        onClick={onBack}
+                        onClick={() => navigate("/")}
                         className="bg-[#fafafa] text-[#0a0a0b] hover:bg-[#e4e4e7]"
                     >
                         Create New PRD
@@ -259,7 +261,7 @@ const History = ({ onBack, onSelectPrd }) => {
                     {prds.map((prd) => (
                         <div
                             key={prd.id}
-                            onClick={() => onSelectPrd(prd)}
+                            onClick={() => navigate(`/prd/${prd.id}`)}
                             className="group bg-[#111113] border border-[#1f1f23] hover:border-[#3f3f46] p-6 rounded-lg cursor-pointer transition-all hover:bg-[#18181b]/50"
                         >
                             <div className="flex flex-col gap-4">

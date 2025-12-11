@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import { FileText, ChevronRight, Copy, Check, Loader2, ArrowLeft, Clock, Lightbulb, Save, History as HistoryIcon, LogOut, User, X, Plus } from "lucide-react";
@@ -49,7 +50,9 @@ const PRD_TIPS = [
   }
 ];
 
-const PRDGenerator = ({ onViewHistory }) => {
+const PRDGenerator = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [idea, setIdea] = useState("");
   const [questions, setQuestions] = useState([]);
@@ -95,6 +98,36 @@ const PRDGenerator = ({ onViewHistory }) => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [timerActive]);
+
+  // Load PRD if ID is present
+  useEffect(() => {
+    if (id) {
+      setLoading(true);
+      axios.get(`${API}/prds/${id}`)
+        .then(res => {
+          setIdea(res.data.idea);
+          setPrd(res.data.content);
+          setGeneratedTags(res.data.tags || []);
+          setStep(3);
+          setSaved(true);
+        })
+        .catch(err => {
+          console.error(err);
+          toast.error("Failed to load PRD");
+          navigate("/history");
+        })
+        .finally(() => setLoading(false));
+    } else {
+      // Reset for new creation
+      setStep(1);
+      setIdea("");
+      setPrd("");
+      setQuestions([]);
+      setAnswers({});
+      setGeneratedTags([]);
+      setSaved(false);
+    }
+  }, [id, navigate]);
 
   // Rotate tips while generating
   useEffect(() => {
@@ -351,7 +384,7 @@ const PRDGenerator = ({ onViewHistory }) => {
           </div>
           <Button
             variant="ghost"
-            onClick={onViewHistory}
+            onClick={() => navigate("/history")}
             className="text-[#71717a] hover:text-[#fafafa] hover:bg-[#1f1f23]"
           >
             <HistoryIcon className="w-4 h-4 mr-2" />
@@ -659,7 +692,7 @@ const PRDGenerator = ({ onViewHistory }) => {
                 </Button>
                 <Button
                   data-testid="new-prd-btn"
-                  onClick={handleReset}
+                  onClick={() => navigate("/")}
                   variant="outline"
                   className="border-[#27272a] bg-transparent hover:bg-[#18181b] text-[#a1a1aa] hover:text-[#fafafa] h-10 px-4 rounded-lg"
                 >

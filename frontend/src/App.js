@@ -33,7 +33,9 @@ function App() {
             <Route path="/signup" element={<Signup />} />
 
             <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<PRDGenerator />} />
+              <Route path="/history" element={<History />} />
+              <Route path="/prd/:id" element={<PRDGenerator />} />
             </Route>
           </Routes>
         </BrowserRouter>
@@ -41,27 +43,6 @@ function App() {
         <Analytics />
       </div>
     </AuthProvider>
-  );
-}
-
-function Home() {
-  const [view, setView] = useState("generator");
-  // const [selectedPrd, setSelectedPrd] = useState(null); // Unused for now
-
-  return (
-    <>
-      {view === "generator" ? (
-        <PRDGenerator onViewHistory={() => setView("history")} />
-      ) : (
-        <History
-          onBack={() => setView("generator")}
-          onSelectPrd={(prd) => {
-            // Future: Load PRD into generator or show detail view
-            setView("generator");
-          }}
-        />
-      )}
-    </>
   );
 }
 
