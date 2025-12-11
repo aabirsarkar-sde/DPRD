@@ -55,6 +55,7 @@ const PRDGenerator = ({ onViewHistory }) => {
   const [prd, setPrd] = useState("");
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [generatedTags, setGeneratedTags] = useState([]);
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
@@ -141,7 +142,8 @@ const PRDGenerator = ({ onViewHistory }) => {
         answers,
       });
       setPrd(response.data.prd);
-      setStep(3);
+      setGeneratedTags(response.data.tags || []);
+      setSaved(false);
       toast.success("PRD generated successfully");
     } catch (error) {
       console.error(error);
@@ -159,7 +161,8 @@ const PRDGenerator = ({ onViewHistory }) => {
     try {
       await axios.post(`${API}/prds`, {
         idea,
-        content: prd
+        content: prd,
+        tags: generatedTags
       }, {
         headers: {
           Authorization: `Bearer ${token}`

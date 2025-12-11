@@ -1,11 +1,20 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { Trash2, FileText, Calendar, ArrowLeft, ChevronRight, Loader2, Edit2, Check, X, Save, FileMinus, Search } from "lucide-react";
+import { Trash2, FileText, Calendar, ArrowLeft, ChevronRight, Loader2, Edit2, Check, X, Save, FileMinus, Search, Filter, Tag } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuCheckboxItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -18,26 +27,49 @@ const History = ({ onBack, onSelectPrd }) => {
     const [editingContentId, setEditingContentId] = useState(null);
     const [editContent, setEditContent] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedTags, setSelectedTags] = useState([]);
+    const [availableTags, setAvailableTags] = useState([]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchPrds(searchQuery);
+            fetchPrds(searchQuery, selectedTags);
         }, 300);
         return () => clearTimeout(timer);
-    }, [searchQuery]);
+    }, [searchQuery, selectedTags]);
 
-    const fetchPrds = async (query = "") => {
+    const fetchPrds = async (query = "", tags = []) => {
         try {
-            const response = await axios.get(`${API}/prds`, {
-                params: { search: query }
-            });
+            const params = { search: query };
+            if (tags.length > 0) {
+                params.tags = tags.join(",");
+            }
+            const response = await axios.get(`${API}/prds`, { params });
             setPrds(response.data);
+
+            // Extract unique tags from all loaded PRDs to populate filter
+            // (In a real app, you might want a separate endpoint for this)
+            const allTags = new Set();
+            response.data.forEach(prd => {
+                if (prd.tags && Array.isArray(prd.tags)) {
+                    prd.tags.forEach(tag => allTags.add(tag));
+                }
+            });
+            setAvailableTags(Array.from(allTags).sort());
+
         } catch (error) {
             console.error(error);
             toast.error("Failed to load history");
         } finally {
             setLoading(false);
         }
+    };
+
+    const toggleTag = (tag) => {
+        setSelectedTags(prev =>
+            prev.includes(tag)
+                ? prev.filter(t => t !== tag)
+                : [...prev, tag]
+        );
     };
 
     const handleDelete = async (e, id) => {
@@ -154,14 +186,60 @@ const History = ({ onBack, onSelectPrd }) => {
                 </Button>
             </div>
 
-            <div className="relative mb-6">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#71717a] w-4 h-4" />
-                <Input
-                    placeholder="Search ideas..."
-                    className="pl-9 bg-[#111113] border-[#27272a] text-[#fafafa] placeholder:text-[#52525b] focus:border-[#fafafa] transition-colors"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
+            <div className="flex items-center gap-4 mb-6">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#71717a] w-4 h-4" />
+                    <Input
+                        placeholder="Search ideas..."
+                        className="pl-9 bg-[#111113] border-[#27272a] text-[#fafafa] placeholder:text-[#52525b] focus:border-[#fafafa] transition-colors"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
+
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="border-[#27272a] bg-[#111113] text-[#a1a1aa] hover:text-[#fafafa] hover:bg-[#1f1f23]">
+                            <Filter className="w-4 h-4 mr-2" />
+                            Filter
+                            {selectedTags.length > 0 && (
+                                <Badge variant="secondary" className="ml-2 h-5 px-1.5 bg-[#fafafa] text-[#0a0a0b]">
+                                    {selectedTags.length}
+                                </Badge>
+                            )}
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56 bg-[#18181b] border-[#27272a]">
+                        <DropdownMenuLabel className="text-[#fafafa]">Filter by Tag</DropdownMenuLabel>
+                        <DropdownMenuSeparator className="bg-[#27272a]" />
+                        {availableTags.length === 0 ? (
+                            <div className="px-2 py-2 text-sm text-[#71717a]">No tags available</div>
+                        ) : (
+                            availableTags.map(tag => (
+                                <DropdownMenuCheckboxItem
+                                    key={tag}
+                                    checked={selectedTags.includes(tag)}
+                                    onCheckedChange={() => toggleTag(tag)}
+                                    className="text-[#a1a1aa] focus:text-[#fafafa] focus:bg-[#27272a]"
+                                >
+                                    {tag}
+                                </DropdownMenuCheckboxItem>
+                            ))
+                        )}
+                        {selectedTags.length > 0 && (
+                            <>
+                                <DropdownMenuSeparator className="bg-[#27272a]" />
+                                <DropdownMenuCheckboxItem
+                                    checked={false}
+                                    onSelect={() => setSelectedTags([])}
+                                    className="text-red-400 focus:text-red-400 focus:bg-red-400/10 justify-center"
+                                >
+                                    Clear Filters
+                                </DropdownMenuCheckboxItem>
+                            </>
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
 
             {prds.length === 0 ? (
@@ -197,55 +275,65 @@ const History = ({ onBack, onSelectPrd }) => {
                                                 <Button size="icon" variant="ghost" className="h-8 w-8 text-emerald-500 hover:bg-emerald-500/10" onClick={(e) => saveEditing(e, prd.id)}>
                                                     <Check className="w-4 h-4" />
                                                 </Button>
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:bg-red-500/10" onClick={cancelEditing}>
+                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:bg-red-500/10" onClick={(e) => { e.stopPropagation(); cancelEditing(); }}>
                                                     <X className="w-4 h-4" />
                                                 </Button>
                                             </div>
                                         ) : (
-                                            <div className="flex items-center gap-2 mb-2 group/title">
-                                                <h3 className="text-[#fafafa] font-medium text-lg truncate group-hover:text-white transition-colors">
-                                                    {prd.idea.substring(0, 80)}{prd.idea.length > 80 ? "..." : ""}
-                                                </h3>
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    className="h-6 w-6 text-[#52525b] hover:text-[#a1a1aa] opacity-0 group-hover/title:opacity-100"
-                                                    onClick={(e) => startEditing(e, prd)}
-                                                >
-                                                    <Edit2 className="w-3 h-3" />
-                                                </Button>
+                                            <div className="flex flex-col gap-2 mb-2 group/title">
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="text-[#fafafa] font-medium text-lg truncate group-hover:text-white transition-colors">
+                                                        {prd.idea}
+                                                    </h3>
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="h-6 w-6 text-[#52525b] hover:text-[#a1a1aa] opacity-0 group-hover/title:opacity-100"
+                                                        onClick={(e) => startEditing(e, prd)}
+                                                    >
+                                                        <Edit2 className="w-3 h-3" />
+                                                    </Button>
+                                                </div>
+                                                {prd.tags && prd.tags.length > 0 && (
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {prd.tags.map(tag => (
+                                                            <Badge key={tag} variant="secondary" className="bg-[#27272a] text-[#a1a1aa] hover:bg-[#3f3f46] border-none text-[10px] h-5 px-1.5">
+                                                                {tag}
+                                                            </Badge>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
+                                    </div>
 
-                                        <div className="flex items-center gap-4 text-sm text-[#52525b]">
-                                            <div className="flex items-center gap-1.5">
-                                                <Calendar className="w-3.5 h-3.5" />
-                                                {format(new Date(prd.created_at), "MMM d, yyyy • h:mm a")}
-                                            </div>
+                                    <div className="flex items-center gap-4 text-sm text-[#52525b]">
+                                        <div className="flex items-center gap-1.5">
+                                            <Calendar className="w-3.5 h-3.5" />
+                                            {format(new Date(prd.created_at), "MMM d, yyyy • h:mm a")}
                                         </div>
                                     </div>
+                                </div>
 
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={(e) => startEditingContent(e, prd)}
-                                            className="text-[#52525b] hover:text-[#fafafa] hover:bg-[#1f1f23] opacity-0 group-hover:opacity-100"
-                                        >
-                                            <FileText className="w-4 h-4 mr-2" />
-                                            Edit Content
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={(e) => handleDelete(e, prd.id)}
-                                            className="text-[#52525b] hover:text-red-400 hover:bg-red-400/10 opacity-0 group-hover:opacity-100 transition-all"
-                                            title="Delete PRD"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </Button>
-                                        <ChevronRight className="w-5 h-5 text-[#3f3f46] group-hover:text-[#a1a1aa] transition-colors" />
-                                    </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => startEditingContent(e, prd)}
+                                        className="text-[#52525b] hover:text-[#fafafa] hover:bg-[#1f1f23] opacity-0 group-hover:opacity-100"
+                                    >
+                                        <FileText className="w-4 h-4 mr-2" />
+                                        Edit Content
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={(e) => handleDelete(e, prd.id)}
+                                        className="text-[#52525b] hover:text-red-400 hover:bg-red-400/10 opacity-0 group-hover:opacity-100 transition-all"
+                                        title="Delete PRD"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
                                 </div>
 
                                 {editingContentId === prd.id && (
@@ -253,23 +341,23 @@ const History = ({ onBack, onSelectPrd }) => {
                                         <Textarea
                                             value={editContent}
                                             onChange={(e) => setEditContent(e.target.value)}
-                                            className="min-h-[300px] bg-[#0a0a0b] border-[#27272a] text-[#fafafa] font-mono text-sm mb-4"
+                                            className="min-h-[200px] mb-4 bg-[#1f1f23] border-[#3f3f46] text-[#fafafa] font-mono text-sm"
                                         />
-                                        <div className="flex justify-between items-center">
+                                        <div className="flex justify-between">
                                             <Button
-                                                variant="ghost"
-                                                onClick={(e) => clearContent(e, prd.id)}
-                                                className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => clearContent(prd.id)}
+                                                className="text-red-400 border-red-400/20 hover:bg-red-400/10 hover:text-red-300"
                                             >
                                                 <FileMinus className="w-4 h-4 mr-2" />
                                                 Clear Content
                                             </Button>
                                             <div className="flex gap-2">
-                                                <Button variant="ghost" onClick={cancelContentEditing} className="text-[#a1a1aa] hover:text-[#fafafa]">
+                                                <Button size="sm" variant="ghost" onClick={cancelContentEditing} className="text-[#a1a1aa] hover:text-[#fafafa]">
                                                     Cancel
                                                 </Button>
-                                                <Button onClick={(e) => saveContentEditing(e, prd.id)} className="bg-[#fafafa] text-[#0a0a0b] hover:bg-[#e4e4e7]">
-                                                    <Save className="w-4 h-4 mr-2" />
+                                                <Button size="sm" onClick={(e) => saveContentEditing(e, prd.id)} className="bg-[#fafafa] text-[#0a0a0b] hover:bg-[#e4e4e7]">
                                                     Save Changes
                                                 </Button>
                                             </div>
@@ -278,8 +366,7 @@ const History = ({ onBack, onSelectPrd }) => {
                                 )}
                             </div>
                         </div>
-                    ))}
-                </div>
+                    ))}    </div>
             )}
         </div>
     );

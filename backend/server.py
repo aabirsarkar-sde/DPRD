@@ -101,6 +101,7 @@ class GeneratePRDRequest(BaseModel):
 
 class GeneratePRDResponse(BaseModel):
     prd: str
+    tags: List[str] = []
 
 class SavedPRD(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -108,10 +109,13 @@ class SavedPRD(BaseModel):
     user_id: str  # Link to User
     idea: str
     content: str
+    tags: List[str] = []
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class SavedPRDCreate(BaseModel):
     idea: str
+    content: str
+    tags: List[str] = []
 class SavedPRDCreate(BaseModel):
     idea: str
     content: str
@@ -710,7 +714,28 @@ Based on your specifications:
 """
     
     logger.info(f"Mock generate-prd: Generated PRD for: {request.idea[:50]}...")
-    return GeneratePRDResponse(prd=mock_prd)
+    
+    # Generate auto-tags based on keywords in idea
+    tags = []
+    idea_lower = request.idea.lower()
+    if "app" in idea_lower or "mobile" in idea_lower:
+        tags.append("Mobile App")
+    if "web" in idea_lower or "site" in idea_lower or "platform" in idea_lower:
+        tags.append("Web App")
+    if "shop" in idea_lower or "commerce" in idea_lower or "store" in idea_lower:
+        tags.append("E-commerce")
+    if "ai" in idea_lower or "intelligence" in idea_lower or "bot" in idea_lower:
+        tags.append("AI")
+    if "social" in idea_lower or "community" in idea_lower:
+        tags.append("Social")
+    if "data" in idea_lower or "dashboard" in idea_lower:
+        tags.append("Data")
+    
+    # Default tag if none found
+    if not tags:
+        tags.append("General")
+        
+    return GeneratePRDResponse(prd=mock_prd, tags=tags)
 
 @api_router.post("/prds", response_model=SavedPRD)
 async def save_prd(input: SavedPRDCreate, user: User = Depends(get_current_user)):
@@ -724,7 +749,8 @@ async def save_prd(input: SavedPRDCreate, user: User = Depends(get_current_user)
 @api_router.get("/prds", response_model=List[SavedPRD])
 async def get_saved_prds(
     user: User = Depends(get_current_user),
-    search: Optional[str] = None
+    search: Optional[str] = None,
+    tags: Optional[str] = None  # Comma-separated tags
 ):
     # Build query
     query = {"user_id": user.id}
@@ -735,7 +761,13 @@ async def get_saved_prds(
             {"idea": {"$regex": search, "$options": "i"}},
             {"content": {"$regex": search, "$options": "i"}}
         ]
-        
+    
+    # Tag filter
+    if tags:
+        tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+        if tag_list:
+            query["tags"] = {"$in": tag_list}
+            
     saved_prds = await db.saved_prds.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
     for prd in saved_prds:
         if isinstance(prd['created_at'], str):
