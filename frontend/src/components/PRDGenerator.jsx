@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { FileText, ChevronRight, Copy, Check, Loader2, ArrowLeft, Clock, Lightbulb, Save, History as HistoryIcon, LogOut, User } from "lucide-react";
+import { FileText, ChevronRight, Copy, Check, Loader2, ArrowLeft, Clock, Lightbulb, Save, History as HistoryIcon, LogOut, User, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 // import { Label } from "@/components/ui/label"; // Unused
@@ -56,6 +58,18 @@ const PRDGenerator = ({ onViewHistory }) => {
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generatedTags, setGeneratedTags] = useState([]);
+  const [tagInput, setTagInput] = useState("");
+
+  const handleAddTag = () => {
+    if (tagInput.trim() && !generatedTags.includes(tagInput.trim())) {
+      setGeneratedTags([...generatedTags, tagInput.trim()]);
+      setTagInput("");
+    }
+  };
+
+  const handleRemoveTag = (tag) => {
+    setGeneratedTags(generatedTags.filter((t) => t !== tag));
+  };
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
@@ -667,6 +681,33 @@ const PRDGenerator = ({ onViewHistory }) => {
                       Save to History
                     </>
                   )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Tag Management */}
+            <div className="mb-4 bg-[#111113] border border-[#1f1f23] rounded-lg p-4">
+              <label className="text-sm font-medium text-[#a1a1aa] mb-3 block">Tags</label>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {generatedTags.map(tag => (
+                  <Badge key={tag} variant="secondary" className="bg-[#27272a] text-[#a1a1aa] hover:bg-[#3f3f46] border-none h-6">
+                    {tag}
+                    <button onClick={() => handleRemoveTag(tag)} className="ml-1.5 hover:text-[#fafafa]">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex gap-2 max-w-sm">
+                <Input
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
+                  placeholder="Add tag..."
+                  className="bg-[#1f1f23] border-[#3f3f46] text-[#fafafa] h-8 text-sm"
+                />
+                <Button onClick={handleAddTag} size="sm" variant="outline" className="border-[#3f3f46] bg-transparent hover:bg-[#1f1f23] h-8 w-8 p-0 text-[#a1a1aa] hover:text-[#fafafa]">
+                  <Plus className="w-4 h-4" />
                 </Button>
               </div>
             </div>

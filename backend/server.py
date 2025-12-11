@@ -116,10 +116,6 @@ class SavedPRDCreate(BaseModel):
     idea: str
     content: str
     tags: List[str] = []
-class SavedPRDCreate(BaseModel):
-    idea: str
-    content: str
-
 class SavedPRDUpdateIdea(BaseModel):
     idea: str
 
