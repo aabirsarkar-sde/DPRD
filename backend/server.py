@@ -183,7 +183,7 @@ Respond ONLY with valid JSON:
 
 IMPORTANT: Generate 8-10 questions. At least 4-5 MUST be about UI/design. Do not include any text outside the JSON."""
 
-PRD_GENERATOR_PROMPT = """You are a Senior Product Designer & Full-Stack Creative Technologist creating production-ready PRDs for Generative UI tools like Lovable, Emergent, Cursor, or Bolt.
+PRD_GENERATOR_PROMPT = """You are a Senior Product Designer & Full-Stack Creative Technologist creating production-ready PRDs for Generative UI tools like Lovable, Cursor, or Bolt.
 
 You are an expert in "Prompt-Driven Design" - using descriptive, sensory design language that AI tools understand.
 
