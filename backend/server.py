@@ -10,6 +10,7 @@ from typing import List, Optional
 import uuid
 from datetime import datetime, timezone, timedelta
 import httpx
+import json
 import jwt
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -592,7 +593,6 @@ async def analyze_idea(request: AnalyzeRequest):
         logger.info(f"LLM Response received, length: {len(llm_response)}")
         
         # Parse the JSON response
-        import json
         # Clean response - remove markdown code blocks if present
         clean_response = llm_response.strip()
         if clean_response.startswith("```json"):
@@ -619,6 +619,12 @@ async def analyze_idea(request: AnalyzeRequest):
     except json.JSONDecodeError as e:
         logger.error(f"JSON parse error: {e}, Response: {llm_response}")
         raise HTTPException(status_code=500, detail="Failed to parse LLM response")
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Gemini API error: {e.response.status_code} - {e.response.text}")
+        raise HTTPException(status_code=502, detail=f"Gemini API error: {e.response.status_code}")
+    except httpx.RequestError as e:
+        logger.error(f"Network error calling Gemini API: {e}")
+        raise HTTPException(status_code=503, detail="Failed to connect to Gemini API")
     except Exception as e:
         logger.error(f"Error analyzing idea: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -669,6 +675,12 @@ Generate the full PRD now."""
         
         return GeneratePRDResponse(prd=prd_response)
         
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Gemini API error: {e.response.status_code} - {e.response.text}")
+        raise HTTPException(status_code=502, detail=f"Gemini API error: {e.response.status_code}")
+    except httpx.RequestError as e:
+        logger.error(f"Network error calling Gemini API: {e}")
+        raise HTTPException(status_code=503, detail="Failed to connect to Gemini API")
     except Exception as e:
         logger.error(f"Error generating PRD: {e}")
         raise HTTPException(status_code=500, detail=str(e))
