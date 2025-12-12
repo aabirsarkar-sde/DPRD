@@ -46,6 +46,12 @@ export const AuthProvider = ({ children }) => {
 
             setToken(access_token);
             localStorage.setItem("token", access_token);
+
+            // Explicitly set header and fetch user immediately to ensure state is ready before navigation
+            axios.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
+            const userResponse = await axios.get(`${API}/auth/me`);
+            setUser(userResponse.data);
+
             toast.success("Logged in successfully");
             return true;
         } catch (error) {

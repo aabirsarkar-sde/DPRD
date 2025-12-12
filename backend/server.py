@@ -28,7 +28,36 @@ db = client[os.environ['DB_NAME']]
 
 # Google Gemini API Configuration
 GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+
+async def generate_gemini_content(prompt: str) -> str:
+    if not GOOGLE_API_KEY:
+        raise HTTPException(status_code=500, detail="Google API Key not configured")
+        
+    headers = {"Content-Type": "application/json"}
+    url = f"{GEMINI_API_URL}?key={GOOGLE_API_KEY}"
+    data = {
+        "contents": [{"parts": [{"text": prompt}]}]
+    }
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(url, headers=headers, json=data, timeout=60.0)
+            if response.status_code != 200:
+                logger.error(f"Gemini API Error: {response.text}")
+                raise HTTPException(status_code=500, detail="AI Service unavailable")
+            
+            result = response.json()
+            try:
+                return result["candidates"][0]["content"]["parts"][0]["text"]
+            except (KeyError, IndexError) as e:
+                logger.error(f"Unexpected API response format: {result}")
+                raise HTTPException(status_code=500, detail="Invalid response from AI service")
+        except httpx.TimeoutException:
+            raise HTTPException(status_code=504, detail="AI Service timed out")
+        except httpx.RequestError as e:
+            logger.error(f"Request error: {e}")
+            raise HTTPException(status_code=502, detail="AI Service connection failed")
 
 # Auth Configuration
 SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-please-change-in-prod')
@@ -579,55 +608,42 @@ async def get_status_checks():
 async def analyze_idea(request: AnalyzeRequest):
     """Analyze user's idea and generate clarifying questions (MOCK MODE)"""
     try:
-        # Mock response - no API call
-        mock_questions = [
-            ClarifyingQuestion(
-                id="q1",
-                question="What authentication method do you prefer?",
-                options=[
-                    QuestionOption(label="Email/Password", value="email_password"),
-                    QuestionOption(label="OAuth (Google/GitHub)", value="oauth"),
-                    QuestionOption(label="Magic Link", value="magic_link"),
-                ],
-                category="auth"
-            ),
-            ClarifyingQuestion(
-                id="q2",
-                question="What's your target user base size?",
-                options=[
-                    QuestionOption(label="Small (under 100 users)", value="small"),
-                    QuestionOption(label="Medium (100-10K users)", value="medium"),
-                    QuestionOption(label="Large (10K+ users)", value="large"),
-                ],
-                category="data_complexity"
-            ),
-            ClarifyingQuestion(
-                id="q3",
-                question="What's your preferred UI style?",
-                options=[
-                    QuestionOption(label="Minimal/Clean", value="minimal"),
-                    QuestionOption(label="Feature-rich Dashboard", value="dashboard"),
-                    QuestionOption(label="Playful/Colorful", value="playful"),
-                ],
-                category="ui_style"
-            ),
-            ClarifyingQuestion(
-                id="q4",
-                question="What's your timeline?",
-                options=[
-                    QuestionOption(label="MVP in 1 week", value="1_week"),
-                    QuestionOption(label="Production in 1 month", value="1_month"),
-                    QuestionOption(label="Enterprise in 3 months", value="3_months"),
-                ],
-                category="features"
-            ),
-        ]
+        # Construct the prompt
+        prompt = f"{QUESTION_GENERATOR_PROMPT}\n\nUser Idea: {request.idea}"
         
-        idea_preview = request.idea[:50] if request.idea else "empty"
-        logger.info(f"Mock analyze: Returning {len(mock_questions)} questions for: {idea_preview}...")
-        return AnalyzeResponse(questions=mock_questions)
+        # Call Gemini API
+        json_response = await generate_gemini_content(prompt)
+        
+        # Clean up Markdown code blocks if present
+        clean_json = json_response.replace("```json", "").replace("```", "").strip()
+        
+        try:
+            parsed_response = json.loads(clean_json)
+        except json.JSONDecodeError:
+            logger.error(f"Failed to parse JSON: {clean_json}")
+            raise HTTPException(status_code=500, detail="Failed to parse AI response")
+            
+        # Validate structure
+        if "questions" not in parsed_response:
+             raise HTTPException(status_code=500, detail="Invalid AI response format")
+
+        questions = []
+        for q in parsed_response["questions"]:
+            options = [QuestionOption(**opt) for opt in q["options"]]
+            questions.append(ClarifyingQuestion(
+                id=q["id"],
+                question=q["question"],
+                options=options,
+                category=q["category"]
+            ))
+            
+        logger.info(f"Generated {len(questions)} questions for idea: {request.idea[:50]}...")
+        return AnalyzeResponse(questions=questions)
+
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Mock analyze error: {e}")
+        logger.error(f"Analyze error: {e}")
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
@@ -635,111 +651,54 @@ async def analyze_idea(request: AnalyzeRequest):
 @api_router.post("/generate-prd", response_model=GeneratePRDResponse)
 async def generate_prd(request: GeneratePRDRequest):
     """Generate PRD from idea and answers (MOCK MODE)"""
-    # Format answers for display
-    answers_text = "\n".join([f"- {k}: {v}" for k, v in request.answers.items()])
+    # Format answers for context
+    answers_text = "\n".join([f"- Question ID {k}: {v}" for k, v in request.answers.items()])
     
-    mock_prd = f"""# Product Requirements Document
+    prompt = f"""{PRD_GENERATOR_PROMPT}
 
-## 1. Executive Summary
+USER IDEA:
+{request.idea}
 
-**Product Name:** {request.idea.split()[0].title()}App
-
-**Vision:** {request.idea}
-
-## 2. User Requirements
-
-Based on your specifications:
+CLARIFYING ANSWERS:
 {answers_text}
 
-## 3. Technical Architecture
+GENERATE THE PRD NOW:"""
 
-### 3.1 Frontend
-- React/Next.js with TypeScript
-- Tailwind CSS for styling
-- Zustand for state management
-
-### 3.2 Backend
-- FastAPI (Python)
-- PostgreSQL database
-- Redis for caching
-
-### 3.3 Infrastructure
-- Vercel for frontend hosting
-- Railway/Render for backend
-- AWS S3 for file storage
-
-## 4. Core Features
-
-### 4.1 User Management
-- Sign up / Login
-- Profile management
-- Settings
-
-### 4.2 Main Features
-- Feature 1: Core functionality based on your idea
-- Feature 2: Secondary features
-- Feature 3: Nice-to-have additions
-
-### 4.3 Admin Panel
-- User management
-- Analytics dashboard
-- Content moderation
-
-## 5. UI/UX Specifications
-
-### 5.1 Design System
-- Color palette: Dark theme with accent colors
-- Typography: Inter font family
-- Spacing: 4px grid system
-
-### 5.2 Key Screens
-1. Landing page
-2. Dashboard
-3. Profile
-4. Settings
-
-## 6. Timeline
-
-| Phase | Duration | Deliverables |
-|-------|----------|-------------|
-| Phase 1 | Week 1-2 | MVP Core |
-| Phase 2 | Week 3-4 | Full Features |
-| Phase 3 | Week 5-6 | Polish & Launch |
-
-## 7. Success Metrics
-
-- User signups: 1000 in first month
-- Daily active users: 30% retention
-- User satisfaction: 4.5+ rating
-
----
-
-*Generated by Deep PRD (Mock Mode)*
-"""
-    
-    logger.info(f"Mock generate-prd: Generated PRD for: {request.idea[:50]}...")
-    
-    # Generate auto-tags based on keywords in idea
-    tags = []
-    idea_lower = request.idea.lower()
-    if "app" in idea_lower or "mobile" in idea_lower:
-        tags.append("Mobile App")
-    if "web" in idea_lower or "site" in idea_lower or "platform" in idea_lower:
-        tags.append("Web App")
-    if "shop" in idea_lower or "commerce" in idea_lower or "store" in idea_lower:
-        tags.append("E-commerce")
-    if "ai" in idea_lower or "intelligence" in idea_lower or "bot" in idea_lower:
-        tags.append("AI")
-    if "social" in idea_lower or "community" in idea_lower:
-        tags.append("Social")
-    if "data" in idea_lower or "dashboard" in idea_lower:
-        tags.append("Data")
-    
-    # Default tag if none found
-    if not tags:
-        tags.append("General")
+    try:
+        # Call Gemini API
+        prd_content = await generate_gemini_content(prompt)
         
-    return GeneratePRDResponse(prd=mock_prd, tags=tags)
+        # Generate tags (simple keyword match for now to save latency, or could be another AI call)
+        tags = []
+        idea_lower = request.idea.lower()
+        keywords = {
+            "mobile": "Mobile App", 
+            "app": "Mobile App",
+            "web": "Web App", 
+            "platform": "Web App",
+            "shop": "E-commerce", 
+            "store": "E-commerce",
+            "ai": "AI", 
+            "bot": "AI",
+            "social": "Social", 
+            "community": "Social",
+            "data": "Data", 
+            "dashboard": "Data"
+        }
+        
+        for k, v in keywords.items():
+            if k in idea_lower and v not in tags:
+                tags.append(v)
+                
+        if not tags:
+            tags.append("General")
+            
+        logger.info(f"Generated PRD for: {request.idea[:50]}...")
+        return GeneratePRDResponse(prd=prd_content, tags=tags)
+        
+    except Exception as e:
+        logger.error(f"Generate PRD error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate PRD: {str(e)}")
 
 @api_router.post("/prds", response_model=SavedPRD)
 async def save_prd(input: SavedPRDCreate, user: User = Depends(get_current_user)):
