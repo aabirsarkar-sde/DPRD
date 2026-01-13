@@ -22,8 +22,7 @@ load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
-# Fix for SSL handshake issues on some platforms
-client = AsyncIOMotorClient(mongo_url, tlsAllowInvalidCertificates=True)
+client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # Google Gemini API Configuration
@@ -60,7 +59,11 @@ async def generate_gemini_content(prompt: str) -> str:
             raise HTTPException(status_code=502, detail="AI Service connection failed")
 
 # Auth Configuration
-SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-please-change-in-prod')
+# Auth Configuration
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    logger.warning("SECRET_KEY not set in environment variables! Using unsafe default for dev only.")
+    SECRET_KEY = 'unsafe-dev-secret-key-change-me'
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -616,6 +619,12 @@ async def analyze_idea(request: AnalyzeRequest):
         
         # Clean up Markdown code blocks if present
         clean_json = json_response.replace("```json", "").replace("```", "").strip()
+        
+        # Extract JSON object if wrapped in other text
+        start_idx = clean_json.find('{')
+        end_idx = clean_json.rfind('}')
+        if start_idx != -1 and end_idx != -1:
+            clean_json = clean_json[start_idx:end_idx+1]
         
         try:
             parsed_response = json.loads(clean_json)

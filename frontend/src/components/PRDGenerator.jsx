@@ -11,9 +11,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 // import { Label } from "@/components/ui/label"; // Unused
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/context/AuthContext";
+import config from "@/config";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = config.API_URL;
 
 const PRD_TIPS = [
   {
