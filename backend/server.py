@@ -197,17 +197,20 @@ For each question:
 - Options should describe actual design implementations
 - Be specific enough for an AI to implement without guessing
 
-Respond ONLY with valid JSON:
+Respond ONLY with valid JSON.
+Do NOT use the examples below. You must generate UNIQUE questions specific to the user's idea.
+
+Example Format (Use this structure but NOT this content):
 {
   "questions": [
     {
       "id": "q1",
       "category": "ui_style",
-      "question": "What visual style should the app have?",
+      "question": "Example Question?",
       "options": [
-        {"label": "Clean & Minimal - Lots of whitespace, subtle shadows, neutral colors", "value": "minimal"},
-        {"label": "Bold & Vibrant - Strong colors, playful animations, rounded shapes", "value": "vibrant"},
-        {"label": "Dark & Premium - Dark backgrounds, high contrast, elegant typography", "value": "dark_premium"}
+        {"label": "Option A Description", "value": "option_a"},
+        {"label": "Option B Description", "value": "option_b"},
+        {"label": "Option C Description", "value": "option_c"}
       ]
     }
   ]
@@ -216,6 +219,8 @@ Respond ONLY with valid JSON:
 IMPORTANT: Generate 8-10 questions. At least 4-5 MUST be about UI/design. Do not include any text outside the JSON."""
 
 PRD_GENERATOR_PROMPT = """You are a Senior Product Designer & Full-Stack Creative Technologist creating production-ready PRDs for Generative UI tools like Lovable, Cursor, or Bolt.
+
+CRITICAL INSTRUCTION: The text below contains examples to show you the FORMAT. Do NOT use the content of these examples. You must generate unique content specific to the user's idea.
 
 You are an expert in "Prompt-Driven Design" - using descriptive, sensory design language that AI tools understand.
 
